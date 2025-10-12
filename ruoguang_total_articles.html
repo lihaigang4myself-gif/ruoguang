@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>若光医学公众号文章列表</title>
+  <style>
+    :root {
+      --primary-color: #1a73e8;
+      --secondary-color: #f5f5f5;
+      --read-color: #888;
+      --unread-color: #333;
+      --border-color: #e0e0e0;
+      --hover-color: #f0f7ff;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      background-color: #f9f9f9;
+      color: #333;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    .stats span {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    
+    .articles-container {
+      padding: 20px;
+    }
+    
+    .article-list {
+      list-style: none;
+    }
+    
+    .article-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+    
+    .article-item:hover {
+      background-color: var(--hover-color);
+    }
+    
+    .article-item.read {
+      color: var(--read-color);
+    }
+    
+    .article-number {
+      min-width: 40px;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+    
+    .article-item.read .article-number {
+      color: var(--read-color);
+    }
+    
+    .article-link {
+      flex: 1;
+      color: inherit;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    
+    .article-link:hover {
+      text-decoration: underline;
+    }
+    
+    .read-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    
+    .article-item.read .read-indicator {
+      background-color: var(--read-color);
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      gap: 10px;
+    }
+    
+    .pagination button {
+      padding: 8px 15px;
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+      background-color: var(--secondary-color);
+    }
+    
+    .pagination button.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .page-numbers {
+      display: flex;
+      gap: 5px;
+      margin: 0 10px;
+    }
+    
+    .page-numbers button {
+      min-width: 40px;
+    }
+    
+    .ellipsis {
+      padding: 8px 5px;
+    }
+    
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        border-radius: 0;
+      }
+      
+      .article-item {
+        padding: 10px;
+      }
+      
+      .pagination {
+        flex-wrap: wrap;
+      }
+      
+      .page-numbers {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>若光医学公众号文章列表</h1>
+      <div class="stats">
+        <span id="read-count">已阅读: 0</span>
+        <span id="total-count">总文章: 0</span>
+        <span id="progress">进度: 0%</span>
+      </div>
+    </header>
+    
+    <div class="articles-container">
+      <ul class="article-list" id="article-list">
+        <!-- 文章列表将通过JavaScript动态生成 -->
+      </ul>
+    </div>
+    
+    <div class="pagination">
+      <button id="prev-page" disabled>上一页</button>
+      <div class="page-numbers" id="page-numbers">
+        <!-- 页码将通过JavaScript动态生成 -->
+      </div>
+      <button id="next-page">下一页</button>
+    </div>
+  </div>
+
+  <script>
+    // 文章数据 - 这里只包含前几页作为示例
+    const articles = [
+      // 第1页
+      { id: 1, title: "雌激素对妊娠维持的作用", url: "https://mp.weixin.qq.com/s/3nxsN9_gA7uMIWCXRV_SIw" },
+      { id: 2, title: "好大夫网王若光教授二维码，专业咨询，诊后联系", url: "https://mp.weixin.qq.com/s/ABp8OSlBG_GuXAbo0npHvg" },
+      { id: 3, title: "中国医师协会超声医师分会产前超声检查指南（2012）", url: "https://mp.weixin.qq.com/s/8X1B1bP8m6mM8qz1x4t0GA" },
+      { id: 4, title: "中国品牌医生风云榜揭晓，为患者心中的好大夫喝彩！", url: "https://mp.weixin.qq.com/s/6ezOzghjgfCKGJ61VcyTLA" },
+      { id: 5, title: "80%不孕症患者不需要试管婴儿 - 北医三院院长乔杰", url: "https://mp.weixin.qq.com/s/o0FRYoL_pNjkTVgognAWuQ" },
+      { id: 6, title: "人真正的悲哀是什么？", url: "https://mp.weixin.qq.com/s/9tNtiM-2DxuOhOfDUUXmnw" },
+      { id: 7, title: "妊娠维持之系列文章之一：雌激素在妊娠早期中的作用", url: "https://mp.weixin.qq.com/s/VdnC5vixz2pn2vKXZXQTVg" },
+      { id: 8, title: "甲状腺功能与临床--西门子化学发光法", url: "https://mp.weixin.qq.com/s/GlynSfmOE1AqPIrDjis8VA" },
+      { id: 9, title: "检验与临床", url: "https://mp.weixin.qq.com/s/ASLHIDsv0-v2ra8ECbr82Q" },
+      { id: 10, title: "孕期叶酸补充及相关基础", url: "https://mp.weixin.qq.com/s/sPCHlPF_wSkPPBVyUs-qQQ" },
+      { id: 11, title: "类固醇（性）激素的合成", url: "https://mp.weixin.qq.com/s/4P06k0rwsZeDPAFuNFzqvw" },
+      { id: 12, title: "妊娠维持之三：母胎循环构建之胎盘形成", url: "https://mp.weixin.qq.com/s/EnMB7VxraniCb3AJIcAPaQ" },
+      { id: 13, title: "妊娠维持之一：雌激素与妊娠维持", url: "https://mp.weixin.qq.com/s/j6pess4hB27ig9Zugjuy_w" },
+      { id: 14, title: "王若光教授关于“线性皮脂腺痣序列征”的专业咨询回复", url: "https://mp.weixin.qq.com/s/ghI7lWcnAWqxhHfjZT1c9w" },
+      { id: 15, title: "王若光教授答疑之［饮食安全］酒精对妊娠和胎儿发育的影响以及双硫仑样反应", url: "https://mp.weixin.qq.com/s/XoFu7xJhnKEDik3gWfrhSw" },
+      { id: 16, title: "王若光教授答疑之［罕见病］（2）结节性脑硬化综合征", url: "https://mp.weixin.qq.com/s/oy6UGKxtp1O4wT7YbZ2BaA" },
+      { id: 17, title: "王若光教授答疑之［罕见病］（3）MURCS联合征", url: "https://mp.weixin.qq.com/s/xnQCbIju_f0bWpMuVZ9BYQ" },
+      { id: 18, title: "王若光教授答疑之［用药安全］（2）米诺环素", url: "https://mp.weixin.qq.com/s/paFYXsGUiOL1J5y_sQhY8w" },
+      { id: 19, title: "王若光教授答疑之［用药安全］（3）呋喃坦啶、氨曲喃、左氧氟沙星", url: "https://mp.weixin.qq.com/s/Syc7TM_aGxbm6QcW_8A1_w" },
+      { id: 20, title: "王若光教授答疑之［罕见病］（1）神经皮肤黑色素痣序列征", url: "https://mp.weixin.qq.com/s/Wh_icbuyQWv3-KohOtvKCw" },
+      { id: 21, title: "王若光教授答疑之［用药安全］（4）孕前后甲氨蝶呤使用风险的专业咨询回复", url: "https://mp.weixin.qq.com/s/Kt5vtRCqYAbQrn6k9DsUtw" },
+      { id: 22, title: "王若光教授关于间苯三酚用于流产和早产的专业咨询回复", url: "https://mp.weixin.qq.com/s/mtmPX7l8Mjtj1cx7ixddkA" },
+      { id: 23, title: "王若光教授答疑之［用药安全］（5）曲安奈德等皮质类固醇激素", url: "https://mp.weixin.qq.com/s/MjKCu87qksbtq2qywH87xg" },
+      { id: 24, title: "几个常见的诊疗知情告知相关法律问题", url: "https://mp.weixin.qq.com/s/ndDCCxk0SQUhGSY6_HOGcw" },
+      { id: 25, title: "Williams综合症", url: "https://mp.weixin.qq.com/s/T8KsV0nmlCxZrDK922tYAw" },
+      { id: 26, title: "眼-耳-脊椎畸形谱（Oculo-Auriculo-Vertebral Spectrum）", url: "https://mp.weixin.qq.com/s/yU3lCsWzJBN-KQ_n3YN43A" },
+      { id: 27, title: "王若光教授关于硝苯地平（拜新同，拜心通）与生殖安全问题的专业回复", url: "https://mp.weixin.qq.com/s/ijArI4t2_vcHIOUibmFHqA" },
+      { id: 28, title: "Jacobsen综合征", url: "https://mp.weixin.qq.com/s/xXAfEm-UtKaJ-oveVXIBlw" },
+      { id: 29, title: "马凡综合征", url: "https://mp.weixin.qq.com/s/2I3_fbUEH0c1uDZ0lBN7OA" },
+      { id: 30, title: "王若光教授妊娠维持之六复发性流产病因及相关基础", url: "https://mp.weixin.qq.com/s/h7Iec3lXUJl9GE5A_BlXcg" },
+      { id: 31, title: "王若光教授妊娠维持之七染色体原因与复发流产", url: "https://mp.weixin.qq.com/s/Wj_D2ZHME6NSoQ1n4NtyVg" },
+      { id: 32, title: "［医路人文］人真正的悲哀是什么？", url: "https://mp.weixin.qq.com/s/Iza8paqcva_nAFyK1O9Vrw" },
+      { id: 33, title: "王若光教授专题之［出生缺陷］（9）肢体-体壁复合畸形", url: "https://mp.weixin.qq.com/s/PBBYHIygHLMKTbh5ZVyb4w" },
+      { id: 34, title: "孙维娜老师讲故事（1）“哑巴”妻", url: "https://mp.weixin.qq.com/s/RXzN6PffBPtooCsKyTiHnw" },
+      { id: 35, title: "王若光教授专题之［病例分享］（1）睾丸母细胞瘤", url: "https://mp.weixin.qq.com/s/o6ziljUNg4kC-TGwB-MWDQ" },
+      { id: 36, title: "王若光教授专题之［出生缺陷］（10）羊膜破裂序列征", url: "https://mp.weixin.qq.com/s/Xy0lxqzbHJzIo_DqI3gHyw" },
+      { id: 37, title: "孙维娜老师讲故事（2）一张“祈福状”", url: "https://mp.weixin.qq.com/s/rFIoTNNnrQy2qCapK_deBA" },
+      { id: 38, title: "［病例讨论］（1）备孕期月经失调及异常子宫出血", url: "https://mp.weixin.qq.com/s/onEkZaQuIDpTYf5BgJY53w" },
+      { id: 39, title: "王若光教授专题之［出生缺陷］（11）FGFR3相关的冠状缝早闭综合征（Muenke颅缝早闭）", url: "https://mp.weixin.qq.com/s/FjIKxFRPyhWPE59Pt-W_mQ" },
+      { id: 40, title: "王若光教授专题之［出生缺陷］（12）Crouzon综合征（颅面骨发育不全）", url: "https://mp.weixin.qq.com/s/dsqDWt5IFCzLVDl9BQBXIQ" },
+      { id: 41, title: "王若光教授专题之［出生缺陷］（13）双胎（DCDA）之唇裂并腭裂", url: "https://mp.weixin.qq.com/s/QXBxre8NGlGpkBiTqEizzA" },
+      { id: 42, title: "王若光教授专题之［用药安全］（9）氟哌噻吨美利曲辛", url: "https://mp.weixin.qq.com/s/-wv4HHbB9Uc9pGIOhxxt8w" },
+      { id: 43, title: "王若光教授专题之［出生缺陷］（14）并/缺指（趾）畸形", url: "https://mp.weixin.qq.com/s/nQV8869J_EXfrgdXelbMYw" },
+      { id: 44, title: "王若光教授专题之［用药安全］（10）帕罗西汀", url: "https://mp.weixin.qq.com/s/iA9rl-uuyibR70H8YLYuuw" },
+      { id: 45, title: "色素失调综合征（Incontinetia Pigmenti syndrome）（Bloch-Sulzberger综合征）", url: "https://mp.weixin.qq.com/s/64mh64Qh9Ir4w2-HIBd9ZQ" },
+      { id: 46, title: "王若光教授专题之［出生缺陷］（15）口腔-面部-手指综合征", url: "https://mp.weixin.qq.com/s/oAKO8any22Fo-6vnjgtFrg" },
+      { id: 47, title: "王若光教授专题之［出生缺陷］（16）新生儿手部肿胀", url: "https://mp.weixin.qq.com/s/DjS4PcoF3ARdN1LLCZvZAQ" },
+      { id: 48, title: "王若光教授专题之［产前诊断］（1）胎儿胆囊增大", url: "https://mp.weixin.qq.com/s/LIZ95G37-_aTWuNPA6q9SQ" },
+      { id: 49, title: "王若光教授专题之［产前诊断］（2）胎儿心脏大血管异常", url: "https://mp.weixin.qq.com/s/yrBNmGn-GD-Hm7sOLKsUaw" },
+      { id: 50, title: "王若光教授专题之［用药安全］（11）奥氮平", url: "https://mp.weixin.qq.com/s/JZd03rEoV4IXAeJw6y-eRQ" },
+      { id: 51, title: "王若光教授专题之［出生缺陷］（17）Ehlers-Danlos综合征", url: "https://mp.weixin.qq.com/s/XsFcpGNFGDvCXgC1z6WgGQ" },
+      { id: 52, title: "王若光教授专题之［病例分享］（2）妊娠合并巨乳症", url: "https://mp.weixin.qq.com/s/zdUJjssQStI76WuK0SQx5A" },
+      { id: 53, title: "王若光教授专题之［用药安全］（12）贝蒌开郁丸", url: "https://mp.weixin.qq.com/s/31BG-cAf-OVjATh5DBEQrw" },
+      { id: 54, title: "［病例讨论］（2）促排卵后异常子宫出血1例", url: "https://mp.weixin.qq.com/s/dwIRKLYrGcaxsZkY5dYAAw" },
+      { id: 55, title: "王若光教授专题之［用药安全］（13）多西环素", url: "https://mp.weixin.qq.com/s/3XLrvLqySB0qgWG0sAYPUg" },
+      { id: 56, title: "王若光教授专题之［用药安全］（14）男方服用抗结核药（吡嗪酰胺、异福平、复方甘草酸苷）", url: "https://mp.weixin.qq.com/s/Iv2kjaQqYjtHOq9eMeUbrA" },
+      { id: 57, title: "王若光教授专题之［出生缺陷］（18）鱼鳞病", url: "https://mp.weixin.qq.com/s/pU5cqCbsCx8EjwV3ms6cPQ" },
+      { id: 58, title: "王若光教授专题之［病例分享］（3）妊娠合并血小板减少", url: "https://mp.weixin.qq.com/s/IxD_8CE9-HxfK8BNN7AJag" },
+      { id: 59, title: "王若光教授专题之［出生缺陷］（19）46，XX单纯性腺发育不全", url: "https://mp.weixin.qq.com/s/9U5fDJXOngQimxWrTWeDCg" },
+      { id: 60, title: "王若光教授专题之［用药安全］（9）氟哌噻吨美利曲辛", url: "https://mp.weixin.qq.com/s/-LjP2L-m6YR2UWt5uq8wlg" },
+      { id: 61, title: "王若光教授专题之［用药安全］（10）帕罗西汀", url: "https://mp.weixin.qq.com/s/XILnkHdJ3JIVFHVZQk2pRw" },
+      { id: 62, title: "王若光教授专题之［出生缺陷］（20）Turner综合征", url: "https://mp.weixin.qq.com/s/BNjGHIg6_OD7fYUs6oRWXw" },
+      { id: 63, title: "王若光教授专题之［用药安全］（11）奥氮平", url: "https://mp.weixin.qq.com/s/ocDrpgdby_njV-gmvWyXLg" },
+      { id: 64, title: "王若光教授专题之［产前诊断］（3）胎儿透明隔囊肿", url: "https://mp.weixin.qq.com/s/gmcKB1eWKGsWnRY8lyMeQg" },
+      { id: 65, title: "王若光教授专题之［用药安全］（12）贝蒌开郁丸", url: "https://mp.weixin.qq.com/s/iShoBJwtFVk6Nd5za-bUUw" },
+      { id: 66, title: "［病例讨论］（3）备孕期经间异常子宫出血1例", url: "https://mp.weixin.qq.com/s/6fm9W-1BfT1Ae5kynxpiKw" },
+      { id: 67, title: "［病例讨论］（4）规律的异常子宫出血1例", url: "https://mp.weixin.qq.com/s/JSz6foou_e8vIj8w6FQX6g" },
+      { id: 68, title: "王若光教授专题之［出生缺陷］（6）眼-耳-脊椎畸形谱（PPT版）", url: "https://mp.weixin.qq.com/s/dIWkQkkF9PLpeG0DKzrYqw" },
+      { id: 69, title: "王若光教授专题之［用药安全］（15）硝呋太尔（麦咪诺）", url: "https://mp.weixin.qq.com/s/0xYlSiAORzpZvL7XSAII-A" },
+      { id: 70, title: "王若光教授专题之［用药安全］（16）氟康唑", url: "https://mp.weixin.qq.com/s/uB7P066iteH5Rf4pLxU4fg" },
+      { id: 71, title: "［病例讨论］（5）浅谈伴有生理性囊肿时如何催经及消除囊肿", url: "https://mp.weixin.qq.com/s/OX4sQhiwMHUbSAggm66KxQ" },
+      { id: 72, title: "王若光教授专题之［生殖内分泌］（1）催经节点的掌握与用药方案", url: "https://mp.weixin.qq.com/s/DmfjI5QkWvQKLTn5HjyvXQ" },
+      { id: 73, title: "王若光教授专题之［专病专解］（1）详解假丝酵母菌性外阴阴道炎", url: "https://mp.weixin.qq.com/s/2xtHrVgm6ou_5sLn6rkCyQ" },
+      { id: 74, title: "王若光教授专题之［用药安全］（17）左氧氟沙星", url: "https://mp.weixin.qq.com/s/iyidK2eRb2PX_hEqOita7Q" },
+      { id: 75, title: "王若光教授专题之［产前诊断］（4）9号染色体三体嵌合型", url: "https://mp.weixin.qq.com/s/T_XHOlHGOXy-f5NOzXJmlQ" },
+      { id: 76, title: "王若光教授专题之［产前诊断］（4）9号染色体三体嵌合型（更新版）", url: "https://mp.weixin.qq.com/s/d3zKGeS-T2SHHASQHWTv1w" },
+      { id: 77, title: "［患者通知］我已开通家庭医生服务功能", url: "https://mp.weixin.qq.com/s/OoM7eS90vhbZQRIpiuMu4w" },
+      { id: 78, title: "王若光教授专题之［用药安全］（18）甲硝唑、保妇康栓、妇科千金胶囊", url: "https://mp.weixin.qq.com/s/pXQx3cPSnjm5PerklQ4M3w" },
+      { id: 79, title: "王若光教授专题之［泌乳素］（2）垂体微腺瘤患者孕后泌乳素明显升高1例", url: "https://mp.weixin.qq.com/s/XXxQ45iF5XaAbhjvJou8FQ" },
+      { id: 80, title: "王若光教授专题之［泌乳素］（3）泌乳素降至正常后孕期反升1例", url: "https://mp.weixin.qq.com/s/7QXU3ei9bVq07bEMgMKIeA" },
+      { id: 81, title: "王若光教授专题之［泌乳素］（4）垂体微腺瘤患者服药至孕后泌乳素正常1例", url: "https://mp.weixin.qq.com/s/cy1kZJa3Cb2QoU7xjOeTPQ" },
+      { id: 82, title: "［病例讨论］（6）早孕期持续阴道流血1例", url: "https://mp.weixin.qq.com/s/fLjkQBZ_4ismmsGwrooSFQ" },
+      { id: 83, title: "王若光教授专题之［产前诊断］（5）胎儿复杂性心脏病", url: "https://mp.weixin.qq.com/s/lQvxTvEUBwT6FZl4CUkukw" },
+      { id: 84, title: "王若光教授专题之［出生缺陷］（21）Dandy–Walker综合征", url: "https://mp.weixin.qq.com/s/bg5N6FMWXMR4S8vOMGpFuw" },
+      { id: 85, title: "［病例讨论］（7）宫外孕血HCG上升梯度良好及清宫术后血HCG下降的机理", url: "https://mp.weixin.qq.com/s/QmupyBTggs31ZbGBVMdZSA" },
+      { id: 86, title: "［病例讨论］（8）新生儿甲亢1例", url: "https://mp.weixin.qq.com/s/gIxRx4fhXdyviI7VCRnP4w" },
+      { id: 87, title: "王若光教授专题之［出生缺陷］（22）Poland序列征", url: "https://mp.weixin.qq.com/s/BMmNilaBmEbJ5PnLALs5kA" },
+      { id: 88, title: "王若光教授专题之［生殖内分泌］（2）调经的实质和目的", url: "https://mp.weixin.qq.com/s/Vf0pXVlDrlzAyYmZ5X7mmQ" },
+      { id: 89, title: "王若光教授专题之［用药安全］（19） 奥硝唑、替硝唑、甲硝唑", url: "https://mp.weixin.qq.com/s/0T45J7FUZ1CMUPtV4z-mtg" },
+      { id: 90, title: "［病例讨论］（9）围绝经期高雄激素的相关问题", url: "https://mp.weixin.qq.com/s/QcUKdieIb80QqEnRRqIOew" },
+      { id: 91, title: "王若光教授专题之［用药安全］（20）咖啡因、地西泮、佐匹克隆、复方芦荟胶囊、莫沙必利", url: "https://mp.weixin.qq.com/s/CtY1dZpA2v62OsxxkyfjRw" },
+      { id: 92, title: "王若光教授专题之［出生缺陷］（1）线性皮脂腺痣序列征", url: "https://mp.weixin.qq.com/s/yImrJ_7wPhN8Yju4kpWUtw" },
+      { id: 93, title: "王若光教授专题之［出生缺陷］（2）结节性脑硬化综合征", url: "https://mp.weixin.qq.com/s/NonuHjnKblzYunPcwB_HHw" },
+      { id: 94, title: "王若光教授专题之［用药安全］（1）孕期叶酸补充相关知识", url: "https://mp.weixin.qq.com/s/bzbeXmwQskXt2eXs_swYZQ" },
+      { id: 95, title: "［病例讨论］（10）男性少精症伴1号染色体臂间倒位1例", url: "https://mp.weixin.qq.com/s/BidHSqTLydIEn2fkAhx5QQ" },
+      { id: 96, title: "王若光教授专题之［出生缺陷］（3）神经皮肤黑色素痣序列征", url: "https://mp.weixin.qq.com/s/uApVJc-BmtGqCcPoT7YJHA" },
+      { id: 97, title: "王若光教授专题之［用药安全］（4）甲氨蝶呤", url: "https://mp.weixin.qq.com/s/ttmQYULlBnGHj-kjQZoJkg" },
+      { id: 98, title: "王若光教授专题之［出生缺陷］（4）MURCS联合征", url: "https://mp.weixin.qq.com/s/ZYb4NLyyw9Fr36ArEi-aWw" },
+      { id: 99, title: "王若光教授专题之［出生缺陷］（5）Williams综合征", url: "https://mp.weixin.qq.com/s/XhC3Dn01rPhF2i9_8TlsTg" },
+      { id: 100, title: "王若光教授专题之［用药安全］（6）间苯三酚", url: "https://mp.weixin.qq.com/s/enPWkG618bWKOOc-VIuJwg" },
+      { id: 101, title: "王若光教授专题之［出生缺陷］（6）眼-耳-脊椎畸形谱（第一和第二鳃弓综合征）", url: "https://mp.weixin.qq.com/s/_fPxJ562a0YHVeS6z26piQ" },
+      { id: 102, title: "王若光教授专题之［用药安全］（7）酒精及双硫仑样反应", url: "https://mp.weixin.qq.com/s/AEqDNWT3CnyevmO4QiYa9A" },
+      { id: 103, title: "［若光动态］若光医学中心有幸迎来陆国辉教授和张巍博士莅临指导", url: "https://mp.weixin.qq.com/s/cYG-q2rdUStX2We2fmhIhQ" },
+      { id: 104, title: "王若光教授专题之［出生缺陷］（7）Jacobsen综合征", url: "https://mp.weixin.qq.com/s/_kcfofM7SUSMvgF-Ba8Zlg" },
+      { id: 105, title: "王若光教授专题之［用药安全］（2）米诺环素", url: "https://mp.weixin.qq.com/s/cGVKLCNCbR84m6J2Gdj4MA" },
+      { id: 106, title: "王若光教授专题之［用药安全］（3）呋喃坦啶、氨曲喃、左氧氟沙星", url: "https://mp.weixin.qq.com/s/966PJjIdHSJ_AP0fZ46bkg" },
+      { id: 107, title: "王若光教授专题之［用药安全］（8）利福平、异烟肼、乙胺丁醇", url: "https://mp.weixin.qq.com/s/7bYlJZbFXePINdWHkRAcmg" },
+      { id: 108, title: "王若光教授专题之［用药安全］（21）氨苄西林、胶体果胶铋、埃索美拉唑、克拉霉素", url: "https://mp.weixin.qq.com/s/nOsI-Lck9IsxRHbUhjiW5w" },
+      { id: 109, title: "王若光教授专题之［用药安全］（5）曲安奈德等糖皮质激素", url: "https://mp.weixin.qq.com/s/9gVxg9zouWSGFG_S1GadkQ" },
+      { id: 110, title: "王若光教授专题之［专病专解］（2）同型半胱氨酸", url: "https://mp.weixin.qq.com/s/TPJYsOAPkUOy1PTIerBOxw" },
+      { id: 111, title: "王若光教授专题之［用药安全］（22）感冒药", url: "https://mp.weixin.qq.com/s/HrNWFaFUilC4LLqY9u_x1Q" },
+      { id: 112, title: "［病例讨论］（11）胎膜下血肿1例", url: "https://mp.weixin.qq.com/s/oPe3R-MWH47dWwOYUx8KSg" },
+      { id: 113, title: "王若光教授专题之［出生缺陷］（8）马凡综合征", url: "https://mp.weixin.qq.com/s/o13Tzok17SrTYF4eHJdG6Q" },
+      { id: 114, title: "王若光教授专题之［用药安全］（23）伊曲康唑（斯皮仁诺）", url: "https://mp.weixin.qq.com/s/Ku7tC-7g1I7QAPQ1C8zFhQ" },
+      { id: 115, title: "［病例讨论］（12）妊娠期并发脑血栓1例", url: "https://mp.weixin.qq.com/s/Tejdh-bKrWDJXBzt5VDrtA" },
+      { id: 116, title: "王若光教授专题之［用药安全］（24）硝苯地平", url: "https://mp.weixin.qq.com/s/WWamuia2EVLy73KxMkgEQg" },
+      { id: 117, title: "王若光教授专题之［出生缺陷］（23）色素失调综合征（Bloch-Sulzberger综合征）", url: "https://mp.weixin.qq.com/s/IvoDqDfutnZHjaz1vizhnA" },
+      { id: 118, title: "遗传病与产前诊断专家联合会诊日通知", url: "https://mp.weixin.qq.com/s/tXgRCzQwx-wTnUlC0IUHaA" },
+      { id: 119, title: "若光医学中心（诺光门诊部）公开招聘信息", url: "https://mp.weixin.qq.com/s/3vtMf28D-y_01BnWL5RilQ" },
+      { id: 120, title: "若光医学中心（诺光门诊部）公开招聘信息", url: "https://mp.weixin.qq.com/s/yydeTBAO-4UN47fzgfELLQ" },
+      { id: 121, title: "王若光教授专题之［出生缺陷］（24）Poland序列征（2）", url: "https://mp.weixin.qq.com/s/1hMTjvMz3aCBwSE32ll9fg" },
+      { id: 122, title: "眼-耳-脊椎畸形谱2（Oculo-Auriculo-Vertebral Spectrum）", url: "https://mp.weixin.qq.com/s/fDHruUH8SzPXLR2n9uvRZg" },
+      { id: 123, title: "若光医学中心（诺光门诊部）公开招聘信息", url: "https://mp.weixin.qq.com/s/oJkOi2mW5eN3i0XZm9O0XA" },
+      { id: 124, title: "王若光教授门诊变更通知", url: "https://mp.weixin.qq.com/s/8UJbEcVP_y_nzs6MNRqgfA" },
+      { id: 125, title: "短肋-多指（趾）综合征（Short rib -polydactyly syndrome，SPR）", url: "https://mp.weixin.qq.com/s/PGgG0Zi-mYbIDYC-oQRxpw" },
+      { id: 126, title: "可发生“胼胝体发育不全”的先天或遗传疾病", url: "https://mp.weixin.qq.com/s/5mLhZcXH6LxP5qXOy8D-bQ" },
+      { id: 127, title: "肥大性毛细血管瘤综合征（Klippel-Trenaunay syndrome）", url: "https://mp.weixin.qq.com/s/KZGNLe1UN32Lg3Ytw2xmHg" },
+      { id: 128, title: "王若光教授专题之［用药安全］（25）莉芙敏", url: "https://mp.weixin.qq.com/s/VIS7hWkiqCXEnYnsoq85hA" },
+      { id: 129, title: "王若光教授专题之［用药安全］（26）利培酮、氯氮平", url: "https://mp.weixin.qq.com/s/5fHFFZa7mk7ER_5Enoe6JA" },
+      { id: 130, title: "王若光教授专题之［出生缺陷］（20）Turner综合征（更新）", url: "https://mp.weixin.qq.com/s/Lfo-b1CMy4tfpVKqWGOdKw" },
+      { id: 131, title: "王若光教授专题之［出生缺陷］（25）Neu-Laxova综合征", url: "https://mp.weixin.qq.com/s/GYIMqtKr9PIKJTO-pO10hw" },
+      { id: 132, title: "王若光教授专题之［基础知识］（3）“综合征”与“序列征”的区别", url: "https://mp.weixin.qq.com/s/TpvovNZsd5mTQfZLYta_Bw" },
+      { id: 133, title: "王若光教授专题之［出生缺陷］（27）神经皮肤黑色素痣序列征2（文献更新）", url: "https://mp.weixin.qq.com/s/PsTmAr6tCXmB_3MWXXYvUg" },
+      { id: 134, title: "王若光教授专题之［基础知识］（3）“综合征”与“序列征”的区别", url: "https://mp.weixin.qq.com/s/rnSM7QrhLZCvPfLNb1HchA" },
+      { id: 135, title: "王若光教授专题之［用药安全］（27）奥利司他", url: "https://mp.weixin.qq.com/s/u1H4h6k4NZHtgeRwiYDdhg" },
+      { id: 136, title: "王若光教授专题之［用药安全］（28）洛哌丁胺、黄连素", url: "https://mp.weixin.qq.com/s/oNT-zZNM0eB-SZjvutub5w" },
+      { id: 137, title: "若光医学中心的相关联系方式", url: "https://mp.weixin.qq.com/s/RQvDN3WA_6kD3pD4KG6nSw" },
+      { id: 138, title: "王若光教授专题之［出生缺陷］（28）Johanson-Blizzard综合征", url: "https://mp.weixin.qq.com/s/JIUSf_USnf6UVMNj54GgkA" },
+      { id: 139, title: "若光医学中心遗传咨询-专家介绍：张巍博士", url: "https://mp.weixin.qq.com/s/MH4kw8aSjylbT76KYy90LA" },
+      { id: 140, title: "若光医学中心遗传咨询-专家介绍：陆国辉博士", url: "https://mp.weixin.qq.com/s/OeJO6GTKHYv_2vhQsiK1EA" },
+      { id: 141, title: "若光医学中心（诺光门诊部）先天遗传病、肿瘤遗传、产前诊断、复发性流产的精准医学联合门诊日通知", url: "https://mp.weixin.qq.com/s/BLTUOzb6IxsNSyDa9Z5mDw" },
+      { id: 142, title: "王若光教授专题之［出生缺陷］（29）前脑无裂序列征", url: "https://mp.weixin.qq.com/s/vbqKqffnEYNK_F_hcphomA" },
+      { id: 143, title: "若光医学中心-诺光门诊部提前一天检查的通知", url: "https://mp.weixin.qq.com/s/ZIg8vEkLGOpQ3BC5hva69g" },
+      { id: 144, title: "王若光教授专题之［用药安全］（29）男方服用奥氮平、碳酸锂、丙戊酸钠", url: "https://mp.weixin.qq.com/s/gmYf9KPEJdvfGXy-b2yYjQ" },
+      { id: 145, title: "［产前诊断］（6）胎儿鼻骨发育不全", url: "https://mp.weixin.qq.com/s/MsdzOmywbepyaWq3HDiB8A" },
+      { id: 146, title: "王若光教授专题之［用药安全］（30）杜冷丁", url: "https://mp.weixin.qq.com/s/yMxxSxi3oF7y5AnWNBcL9Q" },
+      { id: 147, title: "王若光教授专题之［用药安全］（31）碳14呼气试验、X线（透视）", url: "https://mp.weixin.qq.com/s/KhScwpszQzsW_KuimowGtQ" },
+      { id: 148, title: "若光医学中心-诺光门诊部提前一天检查的通知", url: "https://mp.weixin.qq.com/s/92_UaVTJSEQVKztNiPthpg" },
+      { id: 149, title: "顾卫红博士访问若光医学中心进行学术交流", url: "https://mp.weixin.qq.com/s/ul48VWOVBnxRak2qt60_xg" },
+      { id: 150, title: "王若光教授专题之［用药安全］（32）补佳乐（戊酸雌二醇）、芬吗通雌二醇", url: "https://mp.weixin.qq.com/s/GoIALgX7zs-vT-URYMTlPA" },
+      { id: 151, title: "王若光教授专题之［用药安全］（33）艾司唑仑的妊娠安全性及药物三致作用等遗传毒理", url: "https://mp.weixin.qq.com/s/jE5HOUhv1P6HRqjBe8dqyQ" },
+      { id: 152, title: "王若光教授专题之［用药安全］（34）感康", url: "https://mp.weixin.qq.com/s/zzxR2PUhH7RtuVHveVnHdA" },
+      { id: 153, title: "基云惠康CEO郝向稳访问若光医学中心", url: "https://mp.weixin.qq.com/s/GS2_-THelZG71VnKAaS_hA" },
+      { id: 154, title: "流产物检测为21-三体，请问其再发机率？", url: "https://mp.weixin.qq.com/s/NCQQmP0GXpBqQ0I3mV8ECg" },
+      { id: 155, title: "王若光教授专题之［出生缺陷］（30）一例缺指（趾）、并指（趾）家系病例讨论", url: "https://mp.weixin.qq.com/s/TOiZyNK7757GylWtsNXT3g" },
+      { id: 156, title: "巧克力囊肿及产前超声检查好消息——超声专家郭红梅主任一行7月15日访问若光医学中心进行学术交流", url: "https://mp.weixin.qq.com/s/xt0d5h4UFY2Q6q5-ZgTgbQ" },
+      { id: 157, title: "巧克力囊肿及产前超声检查好消息——超声专家郭红梅主任一行7月15日访问若光医学中心进行学术交流", url: "https://mp.weixin.qq.com/s/f6Vwiq2vBByBfaczTmshww" },
+      { id: 158, title: "右位主动脉弓左位动脉导管（血管环形成）并左侧锁骨下动脉迷走、脐带囊肿", url: "https://mp.weixin.qq.com/s/05iMufmCbG1hROsM99hm6A" },
+      { id: 159, title: "女方9号染色体倒位胎儿需要产前诊断吗？", url: "https://mp.weixin.qq.com/s/KSNe-aad-s3I8LvCtZ8-Bw" },
+      { id: 160, title: "羊穿21号染色体短臂多态如何解读和咨询（46,XN,21pstk+）", url: "https://mp.weixin.qq.com/s/7UbP1zDEUJnCH-U8epDlvg" },
+      { id: 161, title: "姐妹染色单体，同源染色体及其相关讨论", url: "https://mp.weixin.qq.com/s/RN5JpjpK0yf-GTjFqgnoaA" },
+      { id: 162, title: "王若光教授专题之［专病专解］卵泡不破裂黄素化综合征（LUFS） 病因病机分析", url: "https://mp.weixin.qq.com/s/lVJG0hlOL_ylBfZo6Uxc3Q" },
+      { id: 163, title: "［病例讨论］（13）孕期高热病例分析", url: "https://mp.weixin.qq.com/s/ZDpH_cLNDZIDNxzERr_fjg" },
+      { id: 164, title: "王若光教授专题之［出生缺陷］（30）骨发育不全症（Atelosteogenesis）", url: "https://mp.weixin.qq.com/s/48p0GLd-6JATSdPbBcfBpw" },
+      { id: 165, title: "王若光教授专题之［出生缺陷］（31）神经皮肤黑色素痣序列征（更新三）", url: "https://mp.weixin.qq.com/s/TqvyiAqBnFAmKcv5I6yChQ" },
+      { id: 166, title: "［病例讨论］（14）月经稀发反复催经后雌激素高合并卵巢囊肿1例", url: "https://mp.weixin.qq.com/s/LELo8fbSXc2LvBY7eqWS2w" },
+      { id: 167, title: "王若光教授专题之［出生缺陷］（32）股骨发育不全-罕见颜面综合征", url: "https://mp.weixin.qq.com/s/g9IK2TXx_lEHomxsCF_ZAQ" },
+      { id: 168, title: "王若光教授专题之［用药安全］（35）来氟米特片、强的松、厄贝沙坦、益肾丸、百龄胶囊、碳酸钙维D3", url: "https://mp.weixin.qq.com/s/ZMqywjeRnTiH3OiSJct49A" },
+      { id: 169, title: "王若光教授专题之［出生缺陷］（33）肛门闭锁，心脏缺陷、先心病（法四），肾发育不良", url: "https://mp.weixin.qq.com/s/8Rllr7RZOEw9YPPCUhnSLA" },
+      { id: 170, title: "王若光教授专题之［出生缺陷（34）］锁骨发育不全少指并指趾畸形", url: "https://mp.weixin.qq.com/s/aOzIzX-sZyLL0I-BkfOteg" },
+      { id: 171, title: "王若光教授专题之［出生缺陷］（35）shprintzen-goldberg syndrome", url: "https://mp.weixin.qq.com/s/dKhhGoDoloLm8-dJlB8tMg" },
+      { id: 172, title: "药物性耳聋基因突变一例解读", url: "https://mp.weixin.qq.com/s/AxzbZ1dpHWYZV7pmNpyzcg" },
+      { id: 173, title: "王若光教授专题之［出生缺陷］（36）罗氏易位型21三体（21号染色体长臂复制为等臂染色体）病例", url: "https://mp.weixin.qq.com/s/BvpGvjvkGXy9G3Vcxzyx9w" },
+      { id: 174, title: "王若光教授专题之［出生缺陷］（37）脊髓栓系-神经管缺陷", url: "https://mp.weixin.qq.com/s/6hf-PeWacl2E9U50z7sWUA" },
+      { id: 175, title: "［若光动态］北京希望组（武汉未来组）高勇博士访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/GkxOYG-9Exm5mBpYH37dqQ" },
+      { id: 176, title: "［若光动态］超声专家郭红梅主任一行访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/uaai4dPFiDPQT80mJZsJuQ" },
+      { id: 177, title: "王若光教授专题之［出生缺陷］（38）软骨外胚层发育不良", url: "https://mp.weixin.qq.com/s/nowEPADOgx2WsW2plJ7bQw" },
+      { id: 178, title: "［若光动态］史世明总经理到访若光医学研究中心", url: "https://mp.weixin.qq.com/s/ski8QLfWC88rF-k6uDL_gQ" },
+      { id: 179, title: "［病例讨论］（15）关于两次妊娠都是唐氏儿的诊断讨论", url: "https://mp.weixin.qq.com/s/-KzIzsDWvezpI5FCgAb79g" },
+      { id: 180, title: "王若光教授专题之［出生缺陷］（39）Goltz综合征", url: "https://mp.weixin.qq.com/s/HKwz9SZnR6wbQLP_vRdrPA" },
+      { id: 181, title: "王若光教授专题之［用药安全］（36）依替米星、呋塞米（速尿）、盐酸坦索罗辛缓释胶囊、尼美舒利分散片", url: "https://mp.weixin.qq.com/s/y6m4R2Pn28i3aQ3z_5Q4uw" },
+      { id: 182, title: "［若光动态］广西中医药大学庞宇舟副校长一行访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/GxCytAiQLP43YwQbCp8smg" },
+      { id: 183, title: "若光医学研究中心（诺光门诊部） 简介、联络方式及就诊预约方法", url: "https://mp.weixin.qq.com/s/bMFuisruKdmyBY7gukZnTQ" },
+      { id: 184, title: "王若光教授专题之［用药安全］（37）帕罗西汀、艾司唑仑", url: "https://mp.weixin.qq.com/s/L0SKX11D1nXDaSAiUOrBFw" },
+      { id: 185, title: "［病例讨论］（16）两胎染色体片段重复致智障但父母正常", url: "https://mp.weixin.qq.com/s/UzwSbySgTWaTfmAaQQxJ6g" },
+      { id: 186, title: "郭一然博士关于健康人做全外显子测序的意义讨论指导", url: "https://mp.weixin.qq.com/s/GiHWtAnTEdWcQf_vUPkqiQ" },
+      { id: 187, title: "王若光教授专题之［出生缺陷］（40）Börjeson-Forssman-Lehmann综合征、Bardet-Biedl综合征6型", url: "https://mp.weixin.qq.com/s/o62-NABeKhd0R8aJSP7T3w" },
+      { id: 188, title: "王若光教授专题之［用药安全］（38）达英-35（炔雌醇环丙孕酮片）", url: "https://mp.weixin.qq.com/s/4feDGx78xBRPM7Oxp1pqcA" },
+      { id: 189, title: "王若光教授专题之［出生缺陷］（29）前脑无裂序列征（2）", url: "https://mp.weixin.qq.com/s/XN1-1oe0FCfd6uiWY0CoBw" },
+      { id: 190, title: "王若光教授专题之［生殖内分泌］（3）卵巢储备功能（上篇）", url: "https://mp.weixin.qq.com/s/pvaOaLCUaVmT9Fu7BASL8Q" },
+      { id: 191, title: "［病例讨论］（17）青春期异常子宫出血1例", url: "https://mp.weixin.qq.com/s/lChzHdmRPvu0uvot1zFSZg" },
+      { id: 192, title: "王若光教授专题之［生殖内分泌］（4）卵巢储备功能（中篇）", url: "https://mp.weixin.qq.com/s/4eyeQTFhFbjgjsILcMRarQ" },
+      { id: 193, title: "［病例讨论］（18）高雌伴卵巢囊肿的异常子宫出血1例", url: "https://mp.weixin.qq.com/s/luB_ex0Tx8jU_Hw9wEA06g" },
+      { id: 194, title: "王若光教授专题之［生殖内分泌］（5）卵巢储备功能（下篇）", url: "https://mp.weixin.qq.com/s/sX90QCRTk7X7yfaw0S9yVQ" },
+      { id: 195, title: "［病例讨论］（19）44,XY，两条13,14染色体均发生罗氏易位的生育问题", url: "https://mp.weixin.qq.com/s/mJ7BABtXj23fZbhARCiwLg" },
+      { id: 196, title: "王若光教授专题之［出生缺陷］（41）Treacher Collins综合征", url: "https://mp.weixin.qq.com/s/wSTOzfqXqVhOAX7ruDGNlA" },
+      { id: 197, title: "王若光教授专题之［出生缺陷］（42）Toriello-Carey综合征", url: "https://mp.weixin.qq.com/s/kZTSTD7_K7IdU7zyT_uHhA" },
+      { id: 198, title: "羊水标本在产前遗传代谢病筛查中具有重要意义（1）", url: "https://mp.weixin.qq.com/s/PJy0UYCQdvvFxHO1goyDlQ" },
+      { id: 199, title: "关于用羊水上清做质谱色谱筛查代谢病的讨论", url: "https://mp.weixin.qq.com/s/LpXaXqXcIwM9mTPYpGSftA" },
+      { id: 200, title: "关于产前诊断风险的讨论", url: "https://mp.weixin.qq.com/s/eRXb-EZ7SxgnCarQDasKrA" },
+      { id: 201, title: "王若光教授专题之［出生缺陷］（43）面部不对称", url: "https://mp.weixin.qq.com/s/IL3qZa1MQZETBptruTcxqQ" },
+      { id: 202, title: "［病例讨论］（20）显性遗传方式还是隐性遗传方式？", url: "https://mp.weixin.qq.com/s/zA7P_QyqZS0QWoQyvdE-YQ" },
+      { id: 203, title: "［若光医学中心］已开通“号内搜”功能", url: "https://mp.weixin.qq.com/s/q-cB8xWcmPaXsIG92YirMA" },
+      { id: 204, title: "［病例讨论］（20）显性遗传方式还是隐性遗传方式？", url: "https://mp.weixin.qq.com/s/IGqzLxATPO7CVkQCBMkmBg" },
+      { id: 205, title: "［产前诊断］（7）胎儿心室强回声、肠管扩张伴染色体微重复", url: "https://mp.weixin.qq.com/s/jJcBH_mnFhEzUGqVe7YvEQ" },
+      { id: 206, title: "［产前诊断］（8）有两次胎儿脑积水引产史，该如何给予再备孕指导？", url: "https://mp.weixin.qq.com/s/tOS4-C1nP9vjg8gnlCApTw" },
+      { id: 207, title: "王若光教授专题之［用药安全］（39）甲磺酸培氟沙星胶囊", url: "https://mp.weixin.qq.com/s/zQXcr2Rs0V6M9IOBog1gqw" },
+      { id: 208, title: "王若光教授专题之［出生缺陷］（44）Apert综合征（Apert Syndrome）", url: "https://mp.weixin.qq.com/s/4O9QIDmojCeg92MfFj7COA" },
+      { id: 209, title: "王若光教授专题之［用药安全］（40）苯溴马隆", url: "https://mp.weixin.qq.com/s/quytWUZwY0DcjYLu1w976Q" },
+      { id: 210, title: "王若光教授专题之［出生缺陷］（45）软骨成长不全（Achondrogenesis）", url: "https://mp.weixin.qq.com/s/EjxgKdTrDLgdGPXuCUe7PQ" },
+      { id: 211, title: "［若光动态］美国贝勒医学院文曙教授及JetLIMS基因平台CEO夏欢应邀访问若光医学中心", url: "https://mp.weixin.qq.com/s/Kh5n5kAuXkvwejwGaCVlkw" },
+      { id: 212, title: "王若光教授专题之［出生缺陷］（46）肥大性毛细血管瘤综合征（Klippel-Trenaunay syndrome）", url: "https://mp.weixin.qq.com/s/zEer43dZqF5hYCQ8w6roFA" },
+      { id: 213, title: "王若光教授专题之［病例分享］（4）角化棘皮瘤", url: "https://mp.weixin.qq.com/s/GnUCEx67KeItf5mx8MK9yQ" },
+      { id: 214, title: "［病例讨论］（21）生殖（性）发育遗传病（disorders of sex development，DSD）", url: "https://mp.weixin.qq.com/s/EEkof0TYVpU9AQ0J2aDgiw" },
+      { id: 215, title: "王若光教授专题之［用药安全］（41）米索前列醇", url: "https://mp.weixin.qq.com/s/-_aSKD_UhBjnT12aKSaVPg" },
+      { id: 216, title: "［若光动态］美国费城儿童医院郭一然博士参访圣湘生物及若光医学研究中心", url: "https://mp.weixin.qq.com/s/RRo6vZkpe42eXN8B5IqXrA" },
+      { id: 217, title: "王若光教授专题之［出生缺陷］（47）羊膜破裂序列征 2", url: "https://mp.weixin.qq.com/s/IkVe1CpI3AWyqEQVOWCSIg" },
+      { id: 218, title: "王若光教授专题之［出生缺陷］（48）Klippel-Feil综合征", url: "https://mp.weixin.qq.com/s/wyIdGFYgJKvBI4eFXAXMBQ" },
+      { id: 219, title: "王若光教授专题之［出生缺陷］（49）额鼻发育不良序列征（脸中部裂综合征）", url: "https://mp.weixin.qq.com/s/GvL1dLbDc2cwZdm-hm7R0A" },
+      { id: 220, title: "我的兄弟们来访，谈经论道，相聊甚欢。", url: "https://mp.weixin.qq.com/s/WfhwYhGeSaQ301wMn8b0BA" },
+      { id: 221, title: "［病例讨论］（22）EMS患者孕中期频繁宫缩病因分析及用药选择的讨论", url: "https://mp.weixin.qq.com/s/K8DBzgnWMpbS577I0IMiuw" },
+      { id: 222, title: "王若光教授专题之［出生缺陷］（50）Turner综合征（2）", url: "https://mp.weixin.qq.com/s/3_PVluMx2qjg4Lfu09x4bQ" },
+      { id: 223, title: "王若光教授专题之［出生缺陷］（51）混合性性腺发育不良（MGD）", url: "https://mp.weixin.qq.com/s/ySnGfCRaW2h16QehQptnfw" },
+      { id: 224, title: "王若光教授专题之［用药安全］（42）奥卡西平", url: "https://mp.weixin.qq.com/s/JoRspQk941L_T6BHCyOWwg" },
+      { id: 225, title: "王若光：生殖及其内分泌之节律化、有序化和同步化", url: "https://mp.weixin.qq.com/s/yPxyuYlzQ2DuxGAFs2Ky_g" },
+      { id: 226, title: "王若光：生殖（性）发育遗传病", url: "https://mp.weixin.qq.com/s/CYqrffyCAp-Yklb6ISPsEg" },
+      { id: 227, title: "长沙市委副书记徐宏源一行到高新区若光医药调研指导", url: "https://mp.weixin.qq.com/s/xisCeYDqruVaFdCqXvT6_w" },
+      { id: 228, title: "王若光教授专题之［出生缺陷］（52）46XX性反转（DSD）", url: "https://mp.weixin.qq.com/s/7WGqiUJuDDXrDpNmkhg6ZQ" },
+      { id: 229, title: "流产物需要行染色体（CNV）检测和保胎或终止应理性的建议", url: "https://mp.weixin.qq.com/s/pWtsZQTa46JTdTSkocmp2w" },
+      { id: 230, title: "王若光：每一个生命都是天空中闪亮的星辰 | 国际罕见病日专稿", url: "https://mp.weixin.qq.com/s/MqK1K4bVbFeCR-dvBEm82A" },
+      { id: 231, title: "遗传病基因检测讨论：王剑、高儒真/陈晓巍、韩连书、王若光", url: "https://mp.weixin.qq.com/s/k0AqmAX40S4b-FfJC79CBQ" },
+      { id: 232, title: "遗传病基因检测讨论：王剑、高儒真/陈晓巍、韩连书、王若光", url: "https://mp.weixin.qq.com/s/eeGrW0crbR1qO9IeWY9Nzg" },
+      { id: 233, title: "王若光教授专题之［用药安全］（43）阿米卡星、甲硝唑、头孢硫脒", url: "https://mp.weixin.qq.com/s/R2_f2iHD16SGFtUMidHkjA" },
+      { id: 234, title: "［若光动态］国际顶级线粒体专家美国美贝勒医学院Lee-Jun Wong教授等访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/Ky16agCWAiJ6UWW5ztze5g" },
+      { id: 235, title: "［若光动态］2018年5月19日俞钢教授访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/cvwk8db5tndfGm_5lErsTw" },
+      { id: 236, title: "［若光动态］2018年3月26日，良培基因技术总监谭灏文访问了若光医学研究中心。", url: "https://mp.weixin.qq.com/s/mqwk5oIZ2L5yXhX6oTvE3A" },
+      { id: 237, title: "［若光动态］2018年6月1日许雄访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/uG8sDt3PMIhxohutrCy4ww" },
+      { id: 238, title: "［若光动态］祝贺黎译励、仇佳丽等三位大夫进修圆满完成", url: "https://mp.weixin.qq.com/s/gwVzvgx-RIFZ1fv-6D2ErQ" },
+      { id: 239, title: "王若光教授专题之［出生缺陷］（53）Ⅲ型骨发育不全症（Atelosteogenesis, type III）", url: "https://mp.weixin.qq.com/s/M2UFnX0LpunNOQ7Xg4Ecvw" },
+      { id: 240, title: "［若光动态］王桂芹、李荔、王艳宏聚会若光医学中心", url: "https://mp.weixin.qq.com/s/3yLwKQPLRc5TpZY-klL-pw" },
+      { id: 241, title: "［若光动态］2018年2月9日王若光教授应聘为长沙金域医学检验临床遗传咨询专家", url: "https://mp.weixin.qq.com/s/sxspXGEO0y4sWizXow4XzQ" },
+      { id: 242, title: "［若光动态］2018年3月26日上午10时美国费城儿童医院郭一然博士参访圣湘生物", url: "https://mp.weixin.qq.com/s/i-l6WjollbBazPcfuuiSxg" },
+      { id: 243, title: "［若光动态］寻因生物周在威博士访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/Zhsr6E1O1ydB3vMDPtto4g" },
+      { id: 244, title: "［若光动态］圣湘生物林建国总经理带领团队访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/frrvj_9RpUz2mtK526cK3A" },
+      { id: 245, title: "卵巢功能评估与EMS内分泌特征", url: "https://mp.weixin.qq.com/s/gAfm698MpfDDtWXURgQCww" },
+      { id: 246, title: "基于表型证据的先天、遗传病分析诊断", url: "https://mp.weixin.qq.com/s/dxPBVryskUEM7Grd-xOCuw" },
+      { id: 247, title: "［若光动态］圣湘生物首席技术官王军博士访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/-USNwJZBl0SQKkc-LLIYTg" },
+      { id: 248, title: "［若光动态］赛福基因王小冬博士访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/XitinJErdjSQGC8JyHo73w" },
+      { id: 249, title: "［若光动态］王若光博士应聘为上市公司株洲千金药业独立董事", url: "https://mp.weixin.qq.com/s/7D_yWkkTyxdwPi_OuR5K3g" },
+      { id: 250, title: "［若光动态］嘉检医学许艺明博士访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/E7Vvsavid8jYj8B7582bcg" },
+      { id: 251, title: "［若光动态］药明明码李振忠访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/Sqpd3WBjVOfbRm8dukPghA" },
+      { id: 252, title: "［若光动态］聚道基因王乐珩一行访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/GI1XtBIKs7LUPAE47Vhbtg" },
+      { id: 253, title: "［若光动态］逯安新、李雪岩访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/Cf-ZFb9EeYV6_PZWecyErA" },
+      { id: 254, title: "［若光动态］陈观龙加盟若光医学研究中心，共建遗传与药理网络平台", url: "https://mp.weixin.qq.com/s/kP7oZgVqAFqbBXx6ZXXySQ" },
+      { id: 255, title: "［若光动态］良培基因谢向模访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/RapTqZeAbBbJXafq_Gw3jQ" },
+      { id: 256, title: "［若光动态］基云惠康CEO郝向稳访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/dSbLSRoZGHOs-B3AM5oNNQ" },
+      { id: 257, title: "王若光教授专题之［用药安全］（44）盐酸左西替利嗪片", url: "https://mp.weixin.qq.com/s/LWulSPT1Pym-6B2rL8Ga4A" },
+      { id: 258, title: "王若光教授专题之［用药安全］（45）沙利度胺片", url: "https://mp.weixin.qq.com/s/j2Ojgm7s_8ERCixkHob4VQ" },
+      { id: 259, title: "王若光教授专题之［用药安全］（46）复方甲氧那明胶囊、桉柠蒎肠溶软胶囊、孟鲁司特钠片", url: "https://mp.weixin.qq.com/s/q09-cgE6kh1Nf4X1HJMAOQ" },
+      { id: 260, title: "［病例讨论］（23）婴儿染色体核型：45,XY,der(5)del(5)(p14)add(5)(p14),-21的讨论", url: "https://mp.weixin.qq.com/s/8Q6c831KwAu2TOp6EPyclg" },
+      { id: 261, title: "王若光教授专题之［基础知识］（4）孕酮药理效应比较及其相关特点", url: "https://mp.weixin.qq.com/s/QbfWym-U5459PU2gRjEplg" },
+      { id: 262, title: "王若光教授专题之［基础知识］（5）类固醇激素的合成与转化", url: "https://mp.weixin.qq.com/s/clCMNYG-RNGksBikivtrFw" },
+      { id: 263, title: "王若光教授专题之［用药安全］孕期超说明书范围用药的风险评估（上集）", url: "https://mp.weixin.qq.com/s/QHXWEYCKGUnCn4AyOGdohg" },
+      { id: 264, title: "王若光教授专题之［用药安全］孕期超说明书范围用药的风险评估（下集）", url: "https://mp.weixin.qq.com/s/q0R8k3LXyaiD4J40hmxwCA" },
+      { id: 265, title: "王若光教授专题之［临床最常见的异常子宫出血—排卵前出血篇］", url: "https://mp.weixin.qq.com/s/pgFSJcLTM_6_-XSSn42nig" },
+      { id: 266, title: "［若光动态］若光医学研究中心特聘唐嗣信主任为特约专家", url: "https://mp.weixin.qq.com/s/D4c1ySza4KGJlKKvT_JtKQ" },
+      { id: 267, title: "为什么要反对盲目黄体酮催经？", url: "https://mp.weixin.qq.com/s/uLVQ6SVpStAz4tRyhans8g" },
+      { id: 268, title: "试管婴儿和自然受孕的孩子有区别吗？权威专家给答案了！", url: "https://mp.weixin.qq.com/s/1z2i2BVEK6HoV9w3MNkvDg" },
+      { id: 269, title: "异常子宫出血之二--哺乳期异常子宫出血", url: "https://mp.weixin.qq.com/s/ssP4_F0VjwTY5GwUS_JV-Q" },
+      { id: 270, title: "若光医学中心进修感悟，感恩王若光教授，不忘初心，砥砺前行", url: "https://mp.weixin.qq.com/s/efKiOZMQr6N1XIUL1pkGKg" },
+      { id: 271, title: "早孕后应该做什么？如何专业判断?", url: "https://mp.weixin.qq.com/s/F6ESyqg4r-cxrpXTCF0bag" },
+      { id: 272, title: "王若光教授专题之［用药安全］（47）阿苯达唑", url: "https://mp.weixin.qq.com/s/is6Ua8-ecy5k2m-MtxRbog" },
+      { id: 273, title: "并指（趾）畸形的分类及遗传学进展", url: "https://mp.weixin.qq.com/s/2IOeh6MGwmK7uQRyevZywg" },
+      { id: 274, title: "王若光教授针对子宫内膜容受性的深度剖析", url: "https://mp.weixin.qq.com/s/aV47JHIQfbL4nDVlKxABBA" },
+      { id: 275, title: "王若光教授专题之［用药安全］（48）伊曲康唑", url: "https://mp.weixin.qq.com/s/vKERdKxNhgTlYAAUmMc0rg" },
+      { id: 276, title: "出血凝血-免疫炎症网络与复发性流产", url: "https://mp.weixin.qq.com/s/Il3pii89i5ed2miSyAXVsA" },
+      { id: 277, title: "若光医学中心医疗学术进修和专业培训 相关条件和要求", url: "https://mp.weixin.qq.com/s/Zj_62iCpncoQ_NPoGWRSoQ" },
+      { id: 278, title: "王若光教授专题之［出生缺陷］（54）22q11.2缺失综合征（Digeorge综合征）", url: "https://mp.weixin.qq.com/s/oueELVTTGOyVG8jsojBMsw" },
+      { id: 279, title: "王若光：孕期超说明书范围用药的风险评估2019年4月安阳", url: "https://mp.weixin.qq.com/s/m-xw_6CxXFk9ktS24MkGEQ" },
+      { id: 280, title: "表型遗传咨询之：羊水过多相关遗传疾病", url: "https://mp.weixin.qq.com/s/O7rzlVzONBis9YKM3_Q9Ng" },
+      { id: 281, title: "复发性流产最重要病因：遗传学因素", url: "https://mp.weixin.qq.com/s/az35ZJaM8xG4EtOAQ0llSg" },
+      { id: 282, title: "王若光复发性流产、易栓症相关遗传疾病", url: "https://mp.weixin.qq.com/s/ujUOaQ2ogvXUcZd8otmz5Q" },
+      { id: 283, title: "王若光：妊娠丢失：流产死胎死产相关遗传性因素(二)", url: "https://mp.weixin.qq.com/s/-2nwFeMuT0eV_vkZmyfFtQ" },
+      { id: 284, title: "王若光：妊娠丢失：流产死胎死产相关遗传性因素（一）", url: "https://mp.weixin.qq.com/s/dJjN4ZM0Xt1VyiIb43w5LQ" },
+      { id: 285, title: "王若光：卵巢功能评估和EMS内分泌和病理生理特征", url: "https://mp.weixin.qq.com/s/QonQmxUTST0WEM0EcPi3ew" },
+      { id: 286, title: "王若光：多囊卵巢综合征不孕中西医结合诊断治疗新视角 (原创)", url: "https://mp.weixin.qq.com/s/Jz7ouvTQ4HgxHvYCnxerBw" },
+      { id: 287, title: "王若光：复诊性流产的诊断和治疗", url: "https://mp.weixin.qq.com/s/pqfLOU5g6s7V6L_QX3jEqQ" },
+      { id: 288, title: "雅培生育学院：复发性流产的诊断和治疗", url: "https://mp.weixin.qq.com/s/QiTRTVOk_dPc4gcWvCJhcA" },
+      { id: 289, title: "2019年5月31日下午Genecards李磊、吴宇来访讲学", url: "https://mp.weixin.qq.com/s/vydr6z57pg-tSWRaZxxFpQ" },
+      { id: 290, title: "泌尿系统先天异常相关遗传病产前概览", url: "https://mp.weixin.qq.com/s/c9NUDxy3omS5cZzDn5rh6A" },
+      { id: 291, title: "门诊随谈：甲状腺功能与早孕", url: "https://mp.weixin.qq.com/s/Pjd0PGe-eI0C1soD7rLTYw" },
+      { id: 292, title: "复发性流产：出血凝血免疫炎症网络", url: "https://mp.weixin.qq.com/s/2Iy1MrLIzxzhVh7Gy50C8w" },
+      { id: 293, title: "黄体酮调节或控制月经的知识你知道和不知道的", url: "https://mp.weixin.qq.com/s/G1T9sqHnJJpr2kcTWXvQUg" },
+      { id: 294, title: "流产物染色体异常的遗传咨询与再备孕问题", url: "https://mp.weixin.qq.com/s/3iHAmXEyx0ApDQ5t9_C1sw" },
+      { id: 295, title: "子宫内膜异位症相关不孕及试管婴儿反复失败", url: "https://mp.weixin.qq.com/s/ZXHQt5p_ifJuq9dQzJvjdQ" },
+      { id: 296, title: "教授无尽问答（一）多囊，早衰，内异症，流产胚胎异常等等（1-10问）", url: "https://mp.weixin.qq.com/s/tbY1jlCial6nniwiue3EzA" },
+      { id: 297, title: "教授无尽问答（二）多囊，早衰，内异症，流产胚胎异常等等（11-20问）", url: "https://mp.weixin.qq.com/s/fZWsFDWF4j2n07Uc33vycw" },
+      { id: 298, title: "教授无尽问答（三）多囊，早衰，内异症，流产胚胎异常等等（21-28问）", url: "https://mp.weixin.qq.com/s/0BV-dCB_lHEi7mYMlx9EoQ" },
+      { id: 299, title: "教授无尽问答（四）多囊，早衰，内异症，流产胚胎异常等等（29-40问）", url: "https://mp.weixin.qq.com/s/XMfGJO1WZaDCQ0Po7LVABg" },
+      { id: 300, title: "X短臂部分缺失完全性卵巢功能丧失", url: "https://mp.weixin.qq.com/s/pyBx6-NCeEJvwXKBoeGNdg" },
+      { id: 301, title: "复发流产、胚胎停育、胎儿生长受限（FGR）相关遗传学因素", url: "https://mp.weixin.qq.com/s/wl3ac0QOHv_aznIxOt9t_g" },
+      { id: 302, title: "胎儿生长受限(FGR)相关遗传性疾病", url: "https://mp.weixin.qq.com/s/w9LUCKHdQqFkcjHlZcAkwQ" },
+      { id: 303, title: "［病例讨论］（24）1例桥本甲状腺炎的治疗", url: "https://mp.weixin.qq.com/s/xW5F4Tp27w5afuM_tbHNZQ" },
+      { id: 304, title: "若光医学中心进修学习感悟", url: "https://mp.weixin.qq.com/s/flzKAd5wHMm4ufbFgntArw" },
+      { id: 305, title: "分享图片", url: "https://mp.weixin.qq.com/s/fJjdpTizuYYm2srjJ4dLqw" },
+      { id: 306, title: "若光医学研究中心就诊流程", url: "https://mp.weixin.qq.com/s/IP8RspSHsUuRL2vzaAq44w" },
+      { id: 307, title: "妊娠潜栓及抗凝治疗监测", url: "https://mp.weixin.qq.com/s/r6MrYOjKz3mv7Dt6sc-2qg" },
+      { id: 308, title: "若光医学中心宝宝墙（一）", url: "https://mp.weixin.qq.com/s/w0FVOM6757axZQ4yOARGMA" },
+      { id: 309, title: "爸爸的精子里不仅有遗传密码，还有他的人生", url: "https://mp.weixin.qq.com/s/diiF6c-yoaq-Gj8M6K3bCg" },
+      { id: 310, title: "献礼新中国成立七十周年，若光医学中心全体员工齐唱《我和我的祖国》", url: "https://mp.weixin.qq.com/s/5LvJf5_9nIwunxYoDA2niA" },
+      { id: 311, title: "先天异常临床表型规范化描述", url: "https://mp.weixin.qq.com/s/SFIkJ2tmSTBGiUtDRNq-oQ" },
+      { id: 312, title: "孕期超说明书范围用药的风险评估", url: "https://mp.weixin.qq.com/s/3xR12zU086hdFVb_xkZVMQ" },
+      { id: 313, title: "生殖节律、内异症、卵巢功能评估，妊娠出凝血监控——若光医学研究中心内部学习交流记实", url: "https://mp.weixin.qq.com/s/PQnjxbZ1H_Qn4JtfVdy-kg" },
+      { id: 314, title: "［若光动态］“添乱帮”公众号创始人参访若光医学中心并跟诊学习", url: "https://mp.weixin.qq.com/s/OJRSa2bQuojFsltxR2OidQ" },
+      { id: 315, title: "如何进行中药分药？", url: "https://mp.weixin.qq.com/s/RfOxap4uvoPEenzXquBTww" },
+      { id: 316, title: "【学术交流】上海韦翰斯生物医药科技高鹏飞、杨敬敏、肖五益来访交流", url: "https://mp.weixin.qq.com/s/8_6q96Fe7huKo5cqm0YEwA" },
+      { id: 317, title: "中国医疗保健国际交流促进会妇儿医疗保健分会 第三届出生缺陷及遗传病多学科协作防控进展研讨会 暨 2019 妊娠维持培训班", url: "https://mp.weixin.qq.com/s/oW08-uIixqCN1mgRqaaCWg" },
+      { id: 318, title: "第三届出生缺陷及遗传病多学科协作防控进展研讨会 暨2019妊娠维持培训班", url: "https://mp.weixin.qq.com/s/9fCgZPQmlGdNNZLyhWBSng" },
+      { id: 319, title: "不孕不育的遗传咨询", url: "https://mp.weixin.qq.com/s/OjPC1GtdmFfFok0p9k8_MA" },
+      { id: 320, title: "第三届出生缺陷及遗传病多学科协作防控进展研讨会 暨2019妊娠维持培训班", url: "https://mp.weixin.qq.com/s/j41PrujybgRT4fJch7l61Q" },
+      { id: 321, title: "第三届出生缺陷及遗传病多学科协作防控进展研讨会 暨2019妊娠维持培训班", url: "https://mp.weixin.qq.com/s/IWxanfP86lPbLLbeCqqJCw" },
+      { id: 322, title: "第三届出生缺陷及遗传病多学科协作防控进展研讨会 暨2019妊娠维持培训班", url: "https://mp.weixin.qq.com/s/e7edRQq5i2j9b9RN47ffBA" },
+      { id: 323, title: "【会议直播】第三届出生缺陷及遗传病多学科协作防控进展研讨会 暨2019妊娠维持培训班", url: "https://mp.weixin.qq.com/s/3T7HDeFjba1Tn9B4_4KEKA" },
+      { id: 324, title: "王若光：新型冠状病毒（2019-nCoV）防治相关建议", url: "https://mp.weixin.qq.com/s/eAhfIXwldKRgKcJ-G5qbfw" },
+      { id: 325, title: "王若光：问题不在确诊病例，疑似高危人群才是逆转疫情根本", url: "https://mp.weixin.qq.com/s/JFPuBrG28XLuUJYt9SjCrA" },
+      { id: 326, title: "王若光教授带队驰援湖北黄冈抗疫一线", url: "https://mp.weixin.qq.com/s/xnx_BMaEhRvcZD8_Mn2gAg" },
+      { id: 327, title: "王若光：关于《新型冠状病毒（2019-nCoV）防治相关建议》的补充建议", url: "https://mp.weixin.qq.com/s/9HaCYOnjVwY8-RJcrU7w9w" },
+      { id: 328, title: "2019-nCoV新型冠状病毒肺炎中西医结合治疗方案病例招募公告", url: "https://mp.weixin.qq.com/s/Ya35SBRdPUBJC0vh2EgwsA" },
+      { id: 329, title: "对维生素D的再认识", url: "https://mp.weixin.qq.com/s/As63vK08WcaxbSgxbtAGVA" },
+      { id: 330, title: "对维生素D的再认识", url: "https://mp.weixin.qq.com/s/-dpxzrguNjk8xVarrrzD6w" },
+      { id: 331, title: "不知道该不该用抗凝药？用多少？什么时候停？什么时候再用？……听王若光教授/讲述：妊娠潜栓及抗凝监测/评估", url: "https://mp.weixin.qq.com/s/Xk_UrfsPJUOtG5CazHJeBQ" },
+      { id: 332, title: "激素药物的子宫内膜效应（雌、孕、OCs等）", url: "https://mp.weixin.qq.com/s/oLwqCkidQ6wg_j8tousgXw" },
+      { id: 333, title: "新型冠状病毒肺炎（COVID19）防治热点问题：3E原则、CICS与恩替卡韦", url: "https://mp.weixin.qq.com/s/oVCPUKCKzndrGKDc8LzlQg" },
+      { id: 334, title: "原发性不孕、多次试管助孕失败，病因您可能想不到", url: "https://mp.weixin.qq.com/s/urRQnRBEcKJonyVjyAkVPA" },
+      { id: 335, title: "新型冠状病毒肺炎（COVID19）防治：抑制病毒复制为基础，阻止CICS进程", url: "https://mp.weixin.qq.com/s/1wW72UYvWcODzLZtO8Gpzw" },
+      { id: 336, title: "王若光：子宫内膜容受性 Endometrial receptivity", url: "https://mp.weixin.qq.com/s/XcvlX5S5lxHNC_HuK0Oc2Q" },
+      { id: 337, title: "有效≠可用，从新冠药物氯喹说起", url: "https://mp.weixin.qq.com/s/QhBu5cFg30LWZvTnfAJmiw" },
+      { id: 338, title: "中药植物雌雌激素研究", url: "https://mp.weixin.qq.com/s/AKprK7FhfdKV4Kec--u51A" },
+      { id: 339, title: "皮肤色素改变相关遗传疾病", url: "https://mp.weixin.qq.com/s/zAzAok3-uUZEFq8bZrrPrQ" },
+      { id: 340, title: "子宫内膜蜕膜样变一定是怀孕了吗?", url: "https://mp.weixin.qq.com/s/NLB3t4eIZPPnLHUgo7pZmg" },
+      { id: 341, title: "子宫内膜蜕膜样变一定是怀孕了吗?", url: "https://mp.weixin.qq.com/s/m-Wrj7FoI0-LCMoohLv9Tg" },
+      { id: 342, title: "骨骼系统遗传病谱-基因网络", url: "https://mp.weixin.qq.com/s/EKjaTLFKcjwgwVx8tDj54g" },
+      { id: 343, title: "王若光教授关于子宫内膜异位症及相关不孕不育的全新观点", url: "https://mp.weixin.qq.com/s/3g_fo12NA77AKvEiWpngFw" },
+      { id: 344, title: "不孕及不良妊娠答疑解惑：子宫内膜异位症和子宫腺肌症", url: "https://mp.weixin.qq.com/s/2eujywGs4YzlQJ5Mk-gQIg" },
+      { id: 345, title: "孕后黄体快速溶解的理论与处理", url: "https://mp.weixin.qq.com/s/0-chHou31B2O8g4Qz_FO0Q" },
+      { id: 346, title: "王若光教授专题之［PCOS］（1）多囊卵巢综合征是否需要及早治疗？", url: "https://mp.weixin.qq.com/s/vVrarhG9c2Anx2RBTDvMyw" },
+      { id: 347, title: "王若光教授专题之［PCOS］（2）多囊卵巢综合征是否能够治愈？", url: "https://mp.weixin.qq.com/s/3ujT-8-bo_BXLfgB0yXQ0A" },
+      { id: 348, title: "羟氯喹必须服用6周以上才能有效吗？", url: "https://mp.weixin.qq.com/s/9rOTNvea8vPRYA7mKwkZkg" },
+      { id: 349, title: "孕妇凝血功能异常的警示", url: "https://mp.weixin.qq.com/s/QBUYEhs75bs68IAkR0QNpg" },
+      { id: 350, title: "流产后一定要等半年或一年才能再备孕吗？", url: "https://mp.weixin.qq.com/s/6bgAhbACY_nt0sYvf5tfPQ" },
+      { id: 351, title: "流产后一定要等半年或一年才能再备孕吗？", url: "https://mp.weixin.qq.com/s/HVnmDrD7CvSKEC0fhUl27g" },
+      { id: 352, title: "开脑洞：不容忽视的雄激素", url: "https://mp.weixin.qq.com/s/yIemervjjbjh_KA1NnG-jw" },
+      { id: 353, title: "王若光教授专题之［出生缺陷］（44）Apert综合征（Apert Syndrome）(2)", url: "https://mp.weixin.qq.com/s/b-XYwgNyptHjn_PvxYzw5g" },
+      { id: 354, title: "原发性不孕、多次试管助孕失败，病因您可能想不到", url: "https://mp.weixin.qq.com/s/uiWlfBsXCTNIqjxSTbXHVA" },
+      { id: 355, title: "两个著名家族，八代子孙，200年后的不同命运！", url: "https://mp.weixin.qq.com/s/xc9UOJWS1yJopDdfrT9QAA" },
+      { id: 356, title: "黄如方主任访问若光医学研究中心", url: "https://mp.weixin.qq.com/s/ESi1rx-_pfg7WLcNe2J9SA" },
+      { id: 357, title: "王若光关于解除好大夫网站合作的声明", url: "https://mp.weixin.qq.com/s/a7oCFXS9Ddpy3o5wu7anmg" },
+      { id: 358, title: "子宫内膜异位症，一个未被深入认知的疾病", url: "https://mp.weixin.qq.com/s/CtgAP6FI-2lEQ-cXs83rug" },
+      { id: 359, title: "黄体功能不足会带来什么", url: "https://mp.weixin.qq.com/s/dS_anBVBllPuCrlecUIiAw" },
+      { id: 360, title: "妊娠期常见不良接触（药物病原体）遗传咨询", url: "https://mp.weixin.qq.com/s/1nKBvc6GOnlnjWf7DbNUyw" },
+      { id: 361, title: "20201011-14妇产科出凝血专题学术会议及专项技能培训班 会议通知", url: "https://mp.weixin.qq.com/s/S0X65IBrWJJmGQlWH3Ha-g" },
+      { id: 362, title: "妇产科出凝血专题学术会议及专项技能培训班", url: "https://mp.weixin.qq.com/s/pNPzrnwqLwFJwcIQJmvytQ" },
+      { id: 363, title: "若光医学研究中心预约挂号，咨询，电话，视频会诊等联络方式", url: "https://mp.weixin.qq.com/s/Wq2gdXsGRRL7cAaWW10CUw" },
+      { id: 364, title: "2011我们身边的共产党员王若光", url: "https://mp.weixin.qq.com/s/BQQ6kKiXNZs4PtxHOa7RFg" },
+      { id: 365, title: "若光医学研究中心预约挂号，咨询，电话，视频会诊等联络方式", url: "https://mp.weixin.qq.com/s/qfDM8PV03PyizWr4yWyvcw" },
+      { id: 366, title: "湖南卫视创先争优：凌晨医生王若光（2011）", url: "https://mp.weixin.qq.com/s/wLSWKJjTKa1tL76gVTArSw" },
+      { id: 367, title: "著名医学遗传学家黄尚志为若光医学研究中心-会元遗传门诊授牌", url: "https://mp.weixin.qq.com/s/vYdR3jpaoF5TkROVdlqH5A" },
+      { id: 368, title: "张君娴：自然流产血栓前状态诊治进展（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/vzuaz7P7oy-7jlWaNThOyw" },
+      { id: 369, title: "余建：黄体不足与出凝血（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/yczxAzjnNIQHiNTecav6_g" },
+      { id: 370, title: "李荔：妊娠期抗凝抗栓治疗案例分享及思考（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/w0osYhrjXkY8A8j-bKSxgA" },
+      { id: 371, title: "李登举：妊娠血小板减少（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/EfL_N0Ai3Q_70Os6o2Lj8A" },
+      { id: 372, title: "心血管系统遗传疾病谱-基因网络", url: "https://mp.weixin.qq.com/s/QR8z2w5BOPeYfynqwD-3tQ" },
+      { id: 373, title: "王雄：出凝血疾病分子诊断（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/qeqg3E2Vspl2yaLrPpK-lA" },
+      { id: 374, title: "（更新）王雄：出凝血疾病分子诊断（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/h4TqG-c7bcnERHb3sCbeOQ" },
+      { id: 375, title: "孙维娜：早孕黄体溶解的理论与处理（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/WJ3mEtIJ4QYzNLKFmtlGoQ" },
+      { id: 376, title: "王桂芹：免疫高凝伴反复出血病例回顾分析（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/BIQCbzsfBKSjnZFqXw9cHg" },
+      { id: 377, title: "唐宁：易栓症的实验室检查与注意事项（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/zuFYQF3MEsUBurbYJ-yCaA" },
+      { id: 378, title: "乔宠：羊水栓塞的争议和热点（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/r9yI0LdqRyboEH1BzK93xQ" },
+      { id: 379, title: "王若光：妊娠出血、潜栓RSA及抗凝治疗监测", url: "https://mp.weixin.qq.com/s/CtspRGVL08gkKRdMoKyuqQ" },
+      { id: 380, title: "王艳宏：子宫腺肌病助孕及保胎病分享（妇产科出凝血专题学术会议及专项技能培训班20201011-14）", url: "https://mp.weixin.qq.com/s/J0Um8UVM-gLzv_J2xtQcyA" },
+      { id: 381, title: "王若光：心血管遗传疾病谱-表型-基因网络", url: "https://mp.weixin.qq.com/s/nyQRW8Fcm1zvEoe_UzXyug" },
+      { id: 382, title: "盛会回顾：第三届出生缺陷及遗传病多学科协作防控进展研讨会暨2019妊娠维持培训班", url: "https://mp.weixin.qq.com/s/dcj9JFElTl-Xr1b2P4L5Yw" },
+      { id: 383, title: "异常妊娠的遗传学因素（王若光）", url: "https://mp.weixin.qq.com/s/iJMoYnIgFnwfcew4WLrmwg" },
+      { id: 384, title: "妇产生殖相关遗传学知识培训与专题会议通知", url: "https://mp.weixin.qq.com/s/AzBHsp8BOCy3gTgiqLjtFg" },
+      { id: 385, title: "妇产生殖相关遗传学知识培训与专题会议通知 （2020年11月第二期）", url: "https://mp.weixin.qq.com/s/LCMVm8zR3SlTXHagP-9ltg" },
+      { id: 386, title: "直播链接：妇产生殖相关遗传学知识培训与专题会议（20201129，20201206）", url: "https://mp.weixin.qq.com/s/LPY0dXZ0FA4ufrOjLmvO1w" },
+      { id: 387, title: "若光云医学：皮肤色素改变相关遗传疾病（18-1）", url: "https://mp.weixin.qq.com/s/mtbFRv4rgPBguHm5Lc0pqA" },
+      { id: 388, title: "若光云医学：第二节 胎儿水肿", url: "https://mp.weixin.qq.com/s/u8LEzzOkkjmZk6ijO_iF_A" },
+      { id: 389, title: "若光云医学：第三节 胎儿脑积水（18-3）", url: "https://mp.weixin.qq.com/s/IirJSFM4FZeurIrf7cxc5w" },
+      { id: 390, title: "直播（2020-11-29，2020-12-06）：妇产生殖相关遗传学知识培训与专题会议", url: "https://mp.weixin.qq.com/s/wSFU2t8F5ukoUTuTI6jE1Q" },
+      { id: 391, title: "周在威：浅谈临床遗传病NGS分析流程与策略（20201129若光妇产生殖遗传会议）", url: "https://mp.weixin.qq.com/s/v_HH7ZII8kdSL6YnKdX-vA" },
+      { id: 392, title: "谭灏文：产前全外显子测序在出生缺陷防控中的经验分享（20201129若光妇产生殖遗传会议）", url: "https://mp.weixin.qq.com/s/KFtOVWy_NShrbmqN5t3JRg" },
+      { id: 393, title: "若光云医学：第四节 Dandy-Walker畸形（18-4）", url: "https://mp.weixin.qq.com/s/jbquwV5-CvdLbvFP29wAlg" },
+      { id: 394, title: "高勇：遗传检测方法在临床中的应用（20201129若光妇产生殖遗传会议）", url: "https://mp.weixin.qq.com/s/cY3EQ4yzX_jj6haE3Gty2w" },
+      { id: 395, title: "若光云医学：表型遗传咨询系列之：第五节 胼胝体发育不全（18-5）", url: "https://mp.weixin.qq.com/s/8EU1_NT3-DkFdRjISy5yjQ" },
+      { id: 396, title: "直播（2020-12-06下午）：妇产生殖相关遗传学知识培训与专题会议", url: "https://mp.weixin.qq.com/s/Z0ODITko9BY1Jy2TrToBwg" },
+      { id: 397, title: "Review Article：子宫内膜异位症（N Engl J Med 2020;382:1244-56.）", url: "https://mp.weixin.qq.com/s/graJWL0ehceYqJpHIUiuzA" },
+      { id: 398, title: "若光云医学：表型遗传咨询系列之：第六节 神经管缺陷（18-6）", url: "https://mp.weixin.qq.com/s/ii_AmrtAy2Or177j9tM6pQ" },
+      { id: 399, title: "张琳琳：染色体变异检测的病例分享（若光云医学：第二期妇产生殖相关遗传学知识培训与专题会议）", url: "https://mp.weixin.qq.com/s/wxgY2e8G_4geKxMMzdz1jA" },
+      { id: 400, title: "若光云医学：表型遗传咨询系列之：第十二节 耳廓畸型/耳前赘或凹陷", url: "https://mp.weixin.qq.com/s/hVz3ZzDeK5-rbdon2LgpIg" },
+      { id: 401, title: "刘维强：纯合区域ROH/单亲二体UPD的产前遗传学诊断（若光云医学：第二期妇产生殖相关遗传学知识培训与专题会议）", url: "https://mp.weixin.qq.com/s/_K8CYds68hgTG7ZZrO1Czw" },
+      { id: 402, title: "若光云医学：表型遗传咨询系列之：第十三节 锁骨发育不全", url: "https://mp.weixin.qq.com/s/37qXFw3YvJ4SV3EC6z5NdA" },
+      { id: 403, title: "尹爱华： 复发性流产遗传咨询（若光云医学：第二期妇产生殖相关遗传学知识培训与专题会议）", url: "https://mp.weixin.qq.com/s/M7DPMOPVCoC1zbbfyWAGmA" },
+      { id: 404, title: "若光云医学：表型遗传咨询系列之：第十四节 胸廓/肋骨异常", url: "https://mp.weixin.qq.com/s/0amqaVAtlnfgSymAXpE9GA" },
+      { id: 405, title: "王若光：保胎用药药理与安全性20201212", url: "https://mp.weixin.qq.com/s/FwRVnYLVkbvUSJktRmqNfw" },
+      { id: 406, title: "若光云医学：表型遗传咨询系列之：第十五节脊柱侧凸/脊椎缺陷", url: "https://mp.weixin.qq.com/s/kHAZ-rX9mQs1QEN-YlbQ7Q" },
+      { id: 407, title: "王若光：孕激素在先兆流产和反复种植失败的运用（20201218湘雅二医院学术交流）", url: "https://mp.weixin.qq.com/s/3L5P3LPBF-7iyrGTNe99sA" },
+      { id: 408, title: "若光云医学：表型遗传咨询系列之：第十六节 蜘蛛样指（趾）", url: "https://mp.weixin.qq.com/s/A0itZTpiWCNdnsSncdBtFw" },
+      { id: 409, title: "甲状腺免疫紊乱和甲状腺激素在子宫内膜异位症中的作用", url: "https://mp.weixin.qq.com/s/Walix2BrXPOfpkfdgYMhYA" },
+      { id: 410, title: "讨论：男性因素不育", url: "https://mp.weixin.qq.com/s/-64im6anM_dF3g6bYwGg2Q" },
+      { id: 411, title: "子宫内膜异位症（Nature综述2018年）", url: "https://mp.weixin.qq.com/s/wKT3hYKxMWBA3U6RBrBCJQ" },
+      { id: 412, title: "塔拉：复发性流产病例分析", url: "https://mp.weixin.qq.com/s/SSFCkEO9iaLP9Q0wzitXJQ" },
+      { id: 413, title: "王若光：流产病因学与临床应对（讲稿93页）", url: "https://mp.weixin.qq.com/s/-iKeYu4dNbSXRUrs3KQ8XA" },
+      { id: 414, title: "王桂芹：内分泌因素致复发性流产的诊治", url: "https://mp.weixin.qq.com/s/VWy10LY2OViPP4pEGUmBXw" },
+      { id: 415, title: "王若光：流产病因学与临床应对（全稿170页）", url: "https://mp.weixin.qq.com/s/DES6t8BSSxtzBuHGR20HJA" },
+      { id: 416, title: "王若光：疑难不孕及复发性不良妊娠相关遗传学因素（讲稿91页）", url: "https://mp.weixin.qq.com/s/hm3i12zuRcEFVf3WJDcFUQ" },
+      { id: 417, title: "王若光：疑难不孕及复发性不良妊娠相关遗传学因素（全稿211页）", url: "https://mp.weixin.qq.com/s/AaJi_Civf5GnMftzvlFy0Q" },
+      { id: 418, title: "临床医生的迫切需要：医学遗传学基础知识培训（会元遗传）", url: "https://mp.weixin.qq.com/s/MvnxP-cLSgJpBjabupaSEQ" },
+      { id: 419, title: "更好的认知子宫内膜异位症相关不孕： 内异症影响卵母细胞质量和胚胎发育研究进展", url: "https://mp.weixin.qq.com/s/Ov6qzJ-Ihtxql-cnw7u94g" },
+      { id: 420, title: "复发性流产的诊治进展", url: "https://mp.weixin.qq.com/s/ZUDL36ss4E9HQW_OmvVzKg" },
+      { id: 421, title: "2021.4.16王若光《流产病因学与临床应对》(1)", url: "https://mp.weixin.qq.com/s/lAfXc1ROgWgY2p4aIxgtDg" },
+      { id: 422, title: "若光医学研究中心门诊预约、视频会诊和网络咨询方式", url: "https://mp.weixin.qq.com/s/f0H_SfnwxhAq9qSimUCt5w" },
+      { id: 423, title: "王若光：子宫内膜异位症相关生殖问题及不良妊娠", url: "https://mp.weixin.qq.com/s/F4mo0TFz7NX0iAaYe9KC_w" },
+      { id: 424, title: "王若光：子宫内膜异位症相关生殖问题及不良妊娠（课程录播）", url: "https://mp.weixin.qq.com/s/EbOY-8_XrHQEBLlpVO9l1w" },
+      { id: 425, title: "知识和缘份的力量——从未宣传的喜报", url: "https://mp.weixin.qq.com/s/alUOeMj0tr9OCZqum3HkzQ" },
+      { id: 426, title: "妊娠期常见不良接触（药物病原体）遗传咨询（王若光）", url: "https://mp.weixin.qq.com/s/19WnVqQYaxcKJWRkSDsTMA" },
+      { id: 427, title: "不孕不育遗传咨询（王若光）", url: "https://mp.weixin.qq.com/s/r4onhA-Ju386BY6TZhhMpg" },
+      { id: 428, title: "会元遗传&若光云全国生育健康远程MDT会诊平台公告", url: "https://mp.weixin.qq.com/s/X8MZo6wDuoI6E3BtXUt0JA" },
+      { id: 429, title: "（第1期）会元遗传&若光云全国生育健康MDT会诊", url: "https://mp.weixin.qq.com/s/xSFYigJwA0dGn9jSKVRb-w" },
+      { id: 430, title: "第四期全国生育健康远程MDT会诊", url: "https://mp.weixin.qq.com/s/a90RLGA4u0rGWTm_oCg8PA" },
+      { id: 431, title: "老友课堂|葡萄胎的遗传与生殖", url: "https://mp.weixin.qq.com/s/iyEY1voIUT2RH8_Pc14oFw" },
+      { id: 432, title: "第五期MDT会诊&胎儿菱脑融合病例（2021年8月29日）", url: "https://mp.weixin.qq.com/s/iH4bPXvLArPXuXUCN513Rg" },
+      { id: 433, title: "第六场2021年9月5日（会元遗传&若光云）生育健康-医学遗传MDT会诊", url: "https://mp.weixin.qq.com/s/1xmAcyPIklQyTUFf4GTeeQ" },
+      { id: 434, title: "第九场2021年9月26日晚，生育健康-医学遗传MDT会诊（会元遗传&若光云）", url: "https://mp.weixin.qq.com/s/JTaXsFPcPlNLHK9_dThSHw" },
+      { id: 435, title: "王若光：多囊卵巢综合征诊断与遗传学分层（2021年9月10日雅培云课堂）", url: "https://mp.weixin.qq.com/s/QX-caY7dMbKYm3YmLr_pDg" },
+      { id: 436, title: "第十场：生育健康-医学遗传MDT会诊（第十场2021年10月4日晚​会元遗传&若光云）", url: "https://mp.weixin.qq.com/s/bjGS4g1I9pGJUkZNApVrHA" },
+      { id: 437, title: "第11场生育健康MDT直播&多次不良妊娠结局者如何备孕分娩正常婴儿病例讨论", url: "https://mp.weixin.qq.com/s/ytyiPLs5vi2smtpanly8wg" },
+      { id: 438, title: "第12场生育健康-医学遗传MDT直播：大疱表皮松解", url: "https://mp.weixin.qq.com/s/CEkOMN2b2-h8pKLQmPSKeQ" },
+      { id: 439, title: "王若光：不孕不育与复发流产遗传咨询（20210923重庆川渝出生缺陷与遗传学会议）", url: "https://mp.weixin.qq.com/s/IjxItZCAGtv0R67qt0eszg" },
+      { id: 440, title: "复发性流产的遗传学因素（王若光20211017）重庆会议", url: "https://mp.weixin.qq.com/s/ZtDQbFtZzECFJdVcBERPcw" },
+      { id: 441, title: "复发性流产抗凝药物的选择与注意事项", url: "https://mp.weixin.qq.com/s/CPtiR1vx_ATb0zzRbyFiFw" },
+      { id: 442, title: "疫情原因，门诊限制预约，复诊病例线上联络", url: "https://mp.weixin.qq.com/s/bXR8OUyQa-viOBdho4WvrQ" },
+      { id: 443, title: "王若光：子宫内膜异位症的诊断与表型证据链20210917雅培云课堂", url: "https://mp.weixin.qq.com/s/27xnpA4vcX9D3yTlC4bdEw" },
+      { id: 444, title: "EMS专题第一课子宫内膜异位症的诊断与表型证据链王若光", url: "https://mp.weixin.qq.com/s/lMUYCt30HbOKuwXge2yu0A" },
+      { id: 445, title: "若光科谱：早孕期孕酮及HCG水平变化及TSH与HCG水平关系", url: "https://mp.weixin.qq.com/s/RK7a2U-qyxFZrL2IZZU0FQ" },
+      { id: 446, title: "王若光PCOS系列第二课：PCOS病理生理及其复杂化渐进演变", url: "https://mp.weixin.qq.com/s/5SlxJGB6V_hUmlTqoqKLwA" },
+      { id: 447, title: "视频王若光PCOS专题第一课：PCOS病因学诊断与遗传学分层", url: "https://mp.weixin.qq.com/s/CdJjrkIRZy4-0ZRtrwEoYw" },
+      { id: 448, title: "视频：PCOS专题第二课（病理生理复杂化渐进演变） 王若光", url: "https://mp.weixin.qq.com/s/i5o0wReGTj6a8XLDPdm0aw" },
+      { id: 449, title: "王若光EMs专题交流会第二课：EMs分子病理生理及其复杂特征", url: "https://mp.weixin.qq.com/s/bSZHspEt2C0SxS1T0fKvtw" },
+      { id: 450, title: "王若光：子宫内膜异位症（遗传与生殖专委会讲课件）", url: "https://mp.weixin.qq.com/s/p8r8woj6XQ8h4U6zO-u6pw" },
+      { id: 451, title: "视频：王若光：子宫内膜异位症相关不良生殖与妊娠后果（重庆）", url: "https://mp.weixin.qq.com/s/IEIP3rPZbjzRzFxN-5xC3Q" },
+      { id: 452, title: "王若光PCOS第三课：生殖节律化与PCOS中西医结合治疗", url: "https://mp.weixin.qq.com/s/BLKSCIyVw_-P4X9cGLEExA" },
+      { id: 453, title: "王若光：多囊卵巢综合征长期误区及其病理生理复杂化渐进演变", url: "https://mp.weixin.qq.com/s/L88-T2NkJRNnmrV2k1XQeA" },
+      { id: 454, title: "王若光：胎停与流产应关注的重点问题", url: "https://mp.weixin.qq.com/s/QrquG4aUrxHcwUQnyFHoCg" },
+      { id: 455, title: "视频：王若光：胎停与流产应关注的重点问题（视频）", url: "https://mp.weixin.qq.com/s/AJOeK5DYzIDPtydREr2ynA" },
+      { id: 456, title: "王若光：复发性流产的病因学与诊治进展（20211031温州中西医结合会议）", url: "https://mp.weixin.qq.com/s/bRhVfNHWyO5-UuYsFA3EAw" },
+      { id: 457, title: "CHPO首次研讨会，王若光：表型证据链是所有疾病的基础门径", url: "https://mp.weixin.qq.com/s/rLwj04DC9gszpByY7ef4eA" },
+      { id: 458, title: "王若光：子宫内膜异位症患者的不孕流产问题及解决方案（20211119第三期生殖医学长安论坛第二讲）", url: "https://mp.weixin.qq.com/s/7XTE-7OeJ62HT-eQHZIuGQ" },
+      { id: 459, title: "王若光：妊娠期出凝血平衡", url: "https://mp.weixin.qq.com/s/UfAq4ASXICtfeqFmGkcF0w" },
+      { id: 460, title: "讨论：妊娠期出凝血平衡（周芸，王桂芹，李荔）", url: "https://mp.weixin.qq.com/s/a3ATJ_uBXpxxOVwnTDNJFQ" },
+      { id: 461, title: "王若光：先天性心脏发育异常遗传病因", url: "https://mp.weixin.qq.com/s/63RkR-hDpPInkl4amVyA6w" },
+      { id: 462, title: "先天性心脏发育异常遗传病因（11/27河北出生缺陷防治论坛）", url: "https://mp.weixin.qq.com/s/y72EpPlUYnl94_MTQ0oQ7w" },
+      { id: 463, title: "胎停与流产应关注的重点问题（王若光20211128）深圳妇幼会议", url: "https://mp.weixin.qq.com/s/FE3KpGNn3hi0k65wmL786A" },
+      { id: 464, title: "王若光：胎停与流产应关注的重点问题（深圳妇幼会议）", url: "https://mp.weixin.qq.com/s/59sxdEm6BXY9SgBhqrmL6w" },
+      { id: 465, title: "课件：子宫内膜异位症患者的不孕流产问题及解决方案（王若光，20211119第三期生殖医学长安论坛第二讲）", url: "https://mp.weixin.qq.com/s/pfpDuEy6j9r54hrzA0ncXA" },
+      { id: 466, title: "第十六场生育健康-医学遗传MDT会诊（2021年12月12日晚）", url: "https://mp.weixin.qq.com/s/azgS-Tn7DTFMOrjBfcCPcQ" },
+      { id: 467, title: "视频：王若光：子宫内膜异位症相关不良生殖与妊娠后果（重庆）", url: "https://mp.weixin.qq.com/s/w30LGZ5DUf9EsVWpNVVM-w" },
+      { id: 468, title: "第十七场  生育健康-医学遗传MDT会诊（2021年12月19日晚）", url: "https://mp.weixin.qq.com/s/iFgMp3TlU9jWte6faKTm8w" },
+      { id: 469, title: "复发性流产病因学与临床应对（王若光贵州会议）", url: "https://mp.weixin.qq.com/s/__zYwtKLQ26aMJmsYd6sbg" },
+      { id: 470, title: "复发性流产病因学与临床应对(王若光)", url: "https://mp.weixin.qq.com/s/AAwI59rtQprCb48jiI-LBg" },
+      { id: 471, title: "第四期MDT会诊病例：结果反馈", url: "https://mp.weixin.qq.com/s/PFLaAtbWP1_lsvszxB1iKw" },
+      { id: 472, title: "第五期生育健康-医学遗传MDT会诊（胎儿菱脑融合病例）结果反馈", url: "https://mp.weixin.qq.com/s/YvGip8R_YbFXcgTk-ai39w" },
+      { id: 473, title: "生育健康-医学遗传第15期反馈（河南扶沟王秋威医生）", url: "https://mp.weixin.qq.com/s/2EwTP4S3owHB0yjg6rityQ" },
+      { id: 474, title: "为什么孕期黄体支持存在这么多争议？", url: "https://mp.weixin.qq.com/s/SR2cpSrMXPTlgeBiEx1tLw" },
+      { id: 475, title: "高胰岛素血症胰岛素拒抗糖耐量受损糖尿病进展是多囊卵巢综合征无法绕过的梗", url: "https://mp.weixin.qq.com/s/MazoNKQ-GAh60AGYAVvXNQ" },
+      { id: 476, title: "若光医学研究中心门诊预约咨询及2022春节放假通知", url: "https://mp.weixin.qq.com/s/FamKPFEBQO-Ki3uLvms3kQ" },
+      { id: 477, title: "第二十一期生育健康-医学遗传MDT会诊讨论（2022年1月23日晚19:30~21:00）", url: "https://mp.weixin.qq.com/s/Uw6NSZ5IiBaMmPgFM7q7MA" },
+      { id: 478, title: "《遗传学原理的临床应用》开课了！", url: "https://mp.weixin.qq.com/s/QiQgJaIJFiU8dCqtxgXp0Q" },
+      { id: 479, title: "《遗传学原理的临床应用培训班》开课了！", url: "https://mp.weixin.qq.com/s/xNXUb7JXu6rum839h1xbog" },
+      { id: 480, title: "早孕期检查子宫动脉血流有意义吗？", url: "https://mp.weixin.qq.com/s/US0UPUpABDZcghTtJfRD1A" },
+      { id: 481, title: "蜕膜化缺陷与子宫内膜异位症", url: "https://mp.weixin.qq.com/s/fKjVQb8YL-NH5500arHCeg" },
+      { id: 482, title: "妊娠期出凝血平衡与监测（全国VTE 防治能力建设项目妇产科专项研讨会）", url: "https://mp.weixin.qq.com/s/2zf3jvVnlV5h1R2DfTM9zg" },
+      { id: 483, title: "蜕膜化缺陷的临床后果", url: "https://mp.weixin.qq.com/s/DkaFkK6U_DNbiDhVx4yj-A" },
+      { id: 484, title: "第26期生育健康-医学遗传MDT会诊讨论（2022年3月27日晚19:30~21:00）", url: "https://mp.weixin.qq.com/s/jsWJvWrTtnb62kNFQmIxvA" },
+      { id: 485, title: "非整倍体的机制和起源", url: "https://mp.weixin.qq.com/s/H8gex1UgVUvAjWQb3dtNXg" },
+      { id: 486, title: "女性高雄激素血症病因分析", url: "https://mp.weixin.qq.com/s/bkonxtdt0vgCGt6nOojRgw" },
+      { id: 487, title: "女性调经和备孕期间疫情防控事项", url: "https://mp.weixin.qq.com/s/uaZtL3F2QbzYu1JlucxQKA" },
+      { id: 488, title: "反复妊娠丢失和长期不孕的原因", url: "https://mp.weixin.qq.com/s/HPS8bcNeYtUD2e5vw-k03Q" },
+      { id: 489, title: "疫情防控长沙速度：关于恢复相关领域、行业、场所正常秩序的通告", url: "https://mp.weixin.qq.com/s/w_oJtlzQ2XCKAvOwdUAFYQ" },
+      { id: 490, title: "观察：疫情防控，长沙为何表现优等，用最小代价实现最大防控效果！", url: "https://mp.weixin.qq.com/s/6E8N_2r_HHwBHI43FOhRRQ" },
+      { id: 491, title: "王若光课件：妊娠期出凝血平衡与监测", url: "https://mp.weixin.qq.com/s/B55-qgb11mHvkHAhdpyJhw" },
+      { id: 492, title: "滥用抗凝何时休（一）：妊娠期出凝血监测最重要是什么？常用的凝血机制检查是什么？", url: "https://mp.weixin.qq.com/s/aSdgF_UBrL3zG5vpLmmwgA" },
+      { id: 493, title: "滥用抗凝何时休（二）：为什么说有些医院的凝血机制检查缺项，或不规范？", url: "https://mp.weixin.qq.com/s/LQ2ZVNOCxYWZISwvhwU3EA" },
+      { id: 494, title: "滥用抗凝何时休（三）：单独D-dimer（D二聚体）检查就可以判断高凝或血栓，或决策用低分子肝素吗？", url: "https://mp.weixin.qq.com/s/vKhDxLxVq6_VfDJ1atbgeQ" },
+      { id: 495, title: "滥用抗凝何时休（四）：妊娠期判断高凝、潜栓（血栓前），或决策抗凝的检查常用哪些？", url: "https://mp.weixin.qq.com/s/ESvxROjstSGc7kK7o5hyWQ" },
+      { id: 496, title: "滥用抗凝何时休（五）：复发流产保胎必须用低分子肝素吗？有过流产史必须用低分子肝素吗​？​", url: "https://mp.weixin.qq.com/s/OYMB4i5S79S98xuiJPhK6w" },
+      { id: 497, title: "滥用抗凝何时休（六）：早孕检查蛋白C，蛋白S，血小板聚集试验必要吗？", url: "https://mp.weixin.qq.com/s/cRtwu44B4IihhEST3J312Q" },
+      { id: 498, title: "滥用抗凝何时休（七）：影响凝血因素，血栓弹力图可以单独决策抗凝依据吗？如何理解出血凝血炎症免疫网络", url: "https://mp.weixin.qq.com/s/9NAqTmLEH38zOzeQ4_ELLg" },
+      { id: 499, title: "滥用抗凝何时休（八）：绒毛膜下血肿，宫内出血或血肿，抗凝出血的原因有哪些？早孕抗凝出血，如何应对？", url: "https://mp.weixin.qq.com/s/T4n-Fx74K4kdchFnRjpaSw" },
+      { id: 500, title: "重视遗传学因素，客观看待胎停流产，理性保胎走出误区", url: "https://mp.weixin.qq.com/s/irKz4BUG3uRZapw7n0GhMQ" },
+      { id: 501, title: "佛子行（若光医学研究中心）", url: "https://mp.weixin.qq.com/s/M4nWSuM-q77MVuJ38Zrhsw" },
+      { id: 502, title: "生育健康-医学遗传 MDT会诊第29场", url: "https://mp.weixin.qq.com/s/NsHds_kyzW0iw1batB_IJA" },
+      { id: 503, title: "伴随的自身免疫可能是子宫内膜异位症更严重阶段的预测因素", url: "https://mp.weixin.qq.com/s/h8I1Cf64e95LWjj7LqNNpw" },
+      { id: 504, title: "从病理生理角度看王若光教授对PCOS诊治误区及复杂化渐进演变的新观点", url: "https://mp.weixin.qq.com/s/hNP_Z8Mmu8ZA7nhAlNrDlQ" },
+      { id: 505, title: "辅助生殖相关复发性流产应对（王若光20220421）东北生殖流产会议", url: "https://mp.weixin.qq.com/s/MPBVuyZ5COGYuXkjM807qw" },
+      { id: 506, title: "吴仕元总结：王若光教授关于子宫内膜异位症最新答疑（一）", url: "https://mp.weixin.qq.com/s/IiAzQ2mGQ20d43BSpKdD-Q" },
+      { id: 507, title: "吴仕元总结：王若光教授关于子宫内膜异位症最新答疑（二）", url: "https://mp.weixin.qq.com/s/GZYYinpJflnqiS4GkPtBiA" },
+      { id: 508, title: "子宫腺肌症对生育力和产科结局的影响", url: "https://mp.weixin.qq.com/s/o5j7I6DyIeeMRFbyAZLdDw" },
+      { id: 509, title: "王若光子宫内膜异位症（EMS）系列（一）：（1）长期忽视子宫内膜异位症的严重后果", url: "https://mp.weixin.qq.com/s/945-PsYHP-O11yKKoFaytA" },
+      { id: 510, title: "王若光子宫内膜异位症（EMS）系列（一）：（2）长期忽视子宫内膜异位症的严重后果", url: "https://mp.weixin.qq.com/s/EzrmK_1bd8UqaSf-odqEig" },
+      { id: 511, title: "【会元遗传&若光云医】第30期生育健康-医学遗传 MDT会诊（可回看）", url: "https://mp.weixin.qq.com/s/Nl_ilYy18ZdrR2d034UW_w" },
+      { id: 512, title: "王若光子宫内膜异位症（EMS）系列（二）：（1）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/d4virgsD7dW89Kh9IvgKCw" },
+      { id: 513, title: "王若光子宫内膜异位症（EMS）系列（二）：（2）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/Y40ua-UacgTYzmYCePpcxA" },
+      { id: 514, title: "王若光子宫内膜异位症（EMS）系列（二）：（3）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/xRzXuQTWQg4QQAXbdIHmYw" },
+      { id: 515, title: "王若光子宫内膜异位症（EMS）系列（二）：（4）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/PaQS73bbOe36Lbceg-N00A" },
+      { id: 516, title: "王若光子宫内膜异位症（EMS）系列（二）：（5）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/7jedGEXGyXYNHjRT6SsCig" },
+      { id: 517, title: "王若光子宫内膜异位症（EMS）系列（二）：（6）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/EB-gyCpGIF-7BQIVj3d8FQ" },
+      { id: 518, title: "王若光子宫内膜异位症（EMS）系列（二）：（2）如何更早诊断子宫内膜异位症？", url: "https://mp.weixin.qq.com/s/CTTlZ1jf7-ubI7czzXK9Lg" },
+      { id: 519, title: "吴仕元：源于医疗过程中的种种疑惑，结识恩师王若光教授——若光医学中心进修感悟", url: "https://mp.weixin.qq.com/s/cvqA7U7WWJuLwXszxdpxLA" },
+      { id: 520, title: "催乳素与生殖系统之间的相互作用：重点关注子宫的病理生理学研究", url: "https://mp.weixin.qq.com/s/_12WTCj20s1k8u1JNg48Ew" },
+      { id: 521, title: "【会元遗传&若光云医】第31场 SCENE 31 2022生育健康-医学遗传 MDT会诊", url: "https://mp.weixin.qq.com/s/hcX0bwjyJR2F5a10OlDunQ" },
+      { id: 522, title: "胎停和复发性流产诊治", url: "https://mp.weixin.qq.com/s/kKBrR4MTOcKzJwHuraXkHA" },
+      { id: 523, title: "女性高雄病因分析", url: "https://mp.weixin.qq.com/s/7aKfyXbAZD-jrdV3gUMvRQ" },
+      { id: 524, title: "【会元遗传&若光云医】​第32场20220529生育健康-医学遗传 MDT会诊", url: "https://mp.weixin.qq.com/s/KQCxgpLHSxtba_gqjpF_7w" },
+      { id: 525, title: "第33场生育健康-医学遗传MDT会诊", url: "https://mp.weixin.qq.com/s/0YQVTktbLScIZPOzJpm71Q" },
+      { id: 526, title: "【会元遗传&若光云医】第34场生育健康-医学遗传MDT会诊", url: "https://mp.weixin.qq.com/s/NwF3iws3Ymo3LCovRoGXCg" },
+      { id: 527, title: "【会元遗传&若光云医】第35场生育健康-医学遗传MDT会诊", url: "https://mp.weixin.qq.com/s/tuE-qzzRxFIzucNu1XwN4g" },
+      { id: 528, title: "会议通知--东北母胎暨妊娠免疫学术会议（第二轮通知含会议日程）", url: "https://mp.weixin.qq.com/s/i8_rbQoxn0iqaEzo7uT3Kw" },
+      { id: 529, title: "王若光：子宫内膜异位症与胎停及复发性流产（课件）", url: "https://mp.weixin.qq.com/s/_lM-AlJn59tMaqNgBQ0VnA" },
+      { id: 530, title: "内异症与复发性流产20220710东北母胎暨妊娠免疫大会", url: "https://mp.weixin.qq.com/s/zn4R2WqIx4RlNHfAcnCPfA" },
+      { id: 531, title: "生殖节律化与PCOS中西医结合治疗（浙江20220714）", url: "https://mp.weixin.qq.com/s/m_7X6EW6sDtqgv8cmxT7NQ" },
+      { id: 532, title: "【会元遗传&若光云医】第36场生育健康-医学遗传MDT会诊讨论", url: "https://mp.weixin.qq.com/s/jXrLc3K8NlqYpUvnEn1RtA" },
+      { id: 533, title: "王若光：反复妊娠丢失病因学分析（香港大学深圳医院交流课件）", url: "https://mp.weixin.qq.com/s/Tg79v_OMCiNo_rXC_t3czQ" },
+      { id: 534, title: "生殖相关复发性流产与应对", url: "https://mp.weixin.qq.com/s/64rXZy0AGeLqoVsHONN4Cw" },
+      { id: 535, title: "先天性神经系统发育异常产前产后一体化防治培训班（湖南省人民医院）", url: "https://mp.weixin.qq.com/s/FYa-zAOM5ZsHcMe9HHm1dQ" },
+      { id: 536, title: "神经管缺陷临床与遗传病因学概览（王若光课件）", url: "https://mp.weixin.qq.com/s/QNSizxi5vdBtj4m0KxevwA" },
+      { id: 537, title: "《临床遗传学高级专题（一）：生殖、发育与出生缺陷》开始报名了", url: "https://mp.weixin.qq.com/s/ikiLhDUTPnhoi_YQgziVAQ" },
+      { id: 538, title: "《临床遗传学高级专题（一）：生殖、发育与出生缺陷》专题系列学术活动的通知", url: "https://mp.weixin.qq.com/s/MB16ywZ9t_4Z0GjKCNPypg" },
+      { id: 539, title: "综述：自身免疫和子宫内膜异位症之间有联系吗？（王静：子宫内膜异位症相关文献荟萃与若光述评观点合集1）", url: "https://mp.weixin.qq.com/s/VZ6bpO4rS2k5VD35ML_pJg" },
+      { id: 540, title: "若光云医学招聘公告", url: "https://mp.weixin.qq.com/s/-6hVHVQRIjXba-SNP66Keg" },
+      { id: 541, title: "免疫、自身免疫和子宫内膜异位症之间的联系--文献更新（2）（免疫、自身免疫和子宫内膜异位症之间的联系，合集1）", url: "https://mp.weixin.qq.com/s/JE50-YEE8yxidHXfwfA-Vg" },
+      { id: 542, title: "第一期：Turner综合征和原发性卵巢功能不全--《临床遗传学高级专题（一）：生殖、发育与出生缺陷》专题系列学术活动", url: "https://mp.weixin.qq.com/s/QGvNntjcRvCqeOw90UYb0g" },
+      { id: 543, title: "课件：Turner综合征病例介绍与表型识别（王若光）", url: "https://mp.weixin.qq.com/s/JJTuXSLSZoneDxSq8DGFaw" },
+      { id: 544, title: "课件：原发性卵巢功能不全病例介绍与表型识别（王若光）", url: "https://mp.weixin.qq.com/s/Gd8Hqg3muP7M2kdqAJBfFw" },
+      { id: 545, title: "第三期：神经管缺陷--《临床遗传学高级专题（一）：生殖、发育与出生缺陷》专题系列学术活动", url: "https://mp.weixin.qq.com/s/PYNgO2rv0WZfPZDe71vN3w" },
+      { id: 546, title: "生殖健康诊疗规范学术研讨会(山东站)2022年8月27号", url: "https://mp.weixin.qq.com/s/Df3gZQXzrcn8_hXjqvF3qQ" },
+      { id: 547, title: "20220829河南省人民医院专题会议：复发性流产病因分析", url: "https://mp.weixin.qq.com/s/jUcE6-nUFG8pa7YBoiUZDg" },
+      { id: 548, title: "课件：反复流产的遗传病因分析与遗传咨询（王若光）", url: "https://mp.weixin.qq.com/s/bXYmT19j9I3PFM7jdQUlsw" },
+      { id: 549, title: "课件：子宫内膜异位症与自然流产和反复妊娠丢失（王若光）", url: "https://mp.weixin.qq.com/s/jt88RHisQVlnHx0EsFb5SQ" },
+      { id: 550, title: "反复流产的遗传病因分析与遗传咨询（王若光20220827）", url: "https://mp.weixin.qq.com/s/SXFlFNZbeNWKVlY3Vw_1DA" },
+      { id: 551, title: "视频：子宫内膜异位症与自然流产和反复妊娠丢失（王若光）", url: "https://mp.weixin.qq.com/s/FKheZXJ_gPP67lkVo2FzFA" },
+      { id: 552, title: "课件：神经管畸形病例介绍和病因学概览（王若光）", url: "https://mp.weixin.qq.com/s/jsGxgo9x4Pyr19PT2msuqA" },
+      { id: 553, title: "专家大查房：早孕保胎中的规范与临床实践", url: "https://mp.weixin.qq.com/s/SRRsfRLxzlPnsfMJph1ytw" },
+      { id: 554, title: "课程主题四：先天性心脏病--《临床遗传学高级专题（一）：生殖、发育与出生缺陷》专题系列学术活动", url: "https://mp.weixin.qq.com/s/2SIA-gyvFkit7vBwauzilg" },
+      { id: 555, title: "课件：复发性流产病因分析（河南省人民医院专题交流）", url: "https://mp.weixin.qq.com/s/8MUi3pcEv9gxO-ia68dn7w" },
+      { id: 556, title: "王若光课件：卵巢腺内激素与胎盘雌孕素合成转化（妇产科网专家大查房第6期：早孕流产保胎中的规范和临床实践）", url: "https://mp.weixin.qq.com/s/3qql6OlbGuMqsYTH3P-5oA" },
+      { id: 557, title: "课件：先天性心脏病遗传病因学概览（王若光）", url: "https://mp.weixin.qq.com/s/Bd9U66CiyK0JO9DCcRLd5w" },
+      { id: 558, title: "余建医生来若光生物美洲故事门诊部出诊啦！", url: "https://mp.weixin.qq.com/s/OxJzOLbXH4DhYE06hqgHqA" },
+      { id: 559, title: "海峡两岸医药卫生交流协会遗传与生殖专业委员会第十八期医学遗传咨询从业人员培训班暨第一期生殖遗传与产前诊断培训班20220917", url: "https://mp.weixin.qq.com/s/5_Z8C9iJkihP2ad41vvQFA" },
+      { id: 560, title: "子宫内膜异位症与自然流产和复发流产及产科病理", url: "https://mp.weixin.qq.com/s/wbMgmz0g86oSH-eGuj89dw" },
+      { id: 561, title: "FGR（胎儿宫内生长受限），胎儿水肿（2022年10月16日）——临床遗传学高级专题（一）：生殖、发育与出生缺陷", url: "https://mp.weixin.qq.com/s/lTCCnTIZ6TZAsx8iq7cu_g" },
+      { id: 562, title: "王若光：复发性流产诊疗中存在的问题（甘肃省生殖医学质控中心线上培训会议）", url: "https://mp.weixin.qq.com/s/5RBbfn8wRR8X9SpYqC66Ow" },
+      { id: 563, title: "第39场生育健康-医学遗传 MDT会诊《MYL3 p.Glu143Lys突变的评级&解读》", url: "https://mp.weixin.qq.com/s/jJ5ozK7RiM4UmH8Vyjw-lQ" },
+      { id: 564, title: "甲基丙二酸血症专题（临床遗传学高级专题一：生殖发育与出生缺陷）", url: "https://mp.weixin.qq.com/s/ZXLjwNfK05jvcgIKw0k1aQ" },
+      { id: 565, title: "王若光：生殖相关复发性流产及应对（广西柳州妇幼保健院）学术讲课", url: "https://mp.weixin.qq.com/s/xyqcwg9XXKMxYRn1DiPFLQ" },
+      { id: 566, title: "生殖医学互联网论坛：阻止大月份妊娠失败（流产和死胎）", url: "https://mp.weixin.qq.com/s/2jXwfhzRbhXWAVxNCIQbsw" },
+      { id: 567, title: "王若光：反复妊娠丢失与应对（20220928会议Bayer HealthCare）", url: "https://mp.weixin.qq.com/s/y_XIalu43-6Ny4MbzdZL_Q" },
+      { id: 568, title: "王若光：子宫内膜异位症与自然流产和反复妊娠丢失（20220930岳阳妇幼线上学术交流会）", url: "https://mp.weixin.qq.com/s/uobNfTKaAZIiRRcbMYIsTw" },
+      { id: 569, title: "妇科/生殖疑难病案讨论（若光云医学与厦门仁军医院线上学术交流）", url: "https://mp.weixin.qq.com/s/AGAdJ11DF9xp82wDLEPu9Q" },
+      { id: 570, title: "2022年11月5-6日辽宁省产前筛查与诊断高峰论坛暨沈阳市妇幼保健院第三届围产期相关疾病学术研讨会会议", url: "https://mp.weixin.qq.com/s/0vJMTqYi0VHV34ofF24QEg" },
+      { id: 571, title: "【第40期MDT】一例羊水过少病例的讨论", url: "https://mp.weixin.qq.com/s/oUJ54148yZutZKroYKzh5A" },
+      { id: 572, title: "若光云医学科技（若光医学中心）厦门仁军医院病例讨论会第一期", url: "https://mp.weixin.qq.com/s/sWOyoC9TPvVmUKdp7ERdlg" },
+      { id: 573, title: "（讨论问题，王若光回复）2022年10月13日世界血栓日妇产在行动：王谢桐教授《复发性流产专家共识》解读和易栓症", url: "https://mp.weixin.qq.com/s/IknGoYCLUklfFTyQVEp-4g" },
+      { id: 574, title: "医学遗传学系列课程：临床医学的重要必备基础，“双十一”视频课程，优惠", url: "https://mp.weixin.qq.com/s/Ev7UeHrpk_FsU8LevIiw_w" },
+      { id: 575, title: "极长链酰基辅酶A脱氢酶缺乏症——临床遗传学高级专题（一）：生殖、发育与出生缺陷", url: "https://mp.weixin.qq.com/s/jXoha_RDs9S0BINAOPnY-Q" },
+      { id: 576, title: "FGR病例介绍及临床病因学概览（2022年10月16日王若光）——临床遗传学高级专题（一）：生殖、发育与出生缺陷", url: "https://mp.weixin.qq.com/s/dmvLwZZLvT6XL9GxHbyOcA" },
+      { id: 577, title: "11月15日“丁香播咖”会议，生殖节律化与PCOS不孕", url: "https://mp.weixin.qq.com/s/NS448ipoconFKe4GDWShgw" },
+      { id: 578, title: "胎儿水肿病例分析及遗传病因学概览（2022年10月16日王若光）——临床遗传学高级专题（一）：生殖、发育与出生缺陷", url: "https://mp.weixin.qq.com/s/imcq0JpAnUDOXgzP4vXqtQ" },
+      { id: 579, title: "王若光：复发性流产诊疗存在的问题（20221022甘肃生殖医学质控中心线上会议）", url: "https://mp.weixin.qq.com/s/e3QS9v48LaS_T6G3-DmR-A" },
+      { id: 580, title: "20221021复发性流产诊疗存在问题（甘肃生殖质控会议）", url: "https://mp.weixin.qq.com/s/P990pdAASXzz3tAlxPHZRQ" },
+      { id: 581, title: "王若光：阻止大月份妊娠失败（流产和死胎）2022年10月30日生殖医学互联网论坛第22期专题会诊", url: "https://mp.weixin.qq.com/s/O_epS1Au37zPVqBXsw3vDA" },
+      { id: 582, title: "胎儿先天性心脏病遗传病因学概览（王若光20221105）辽宁省产检诊断与遗产咨询论坛", url: "https://mp.weixin.qq.com/s/yE8QFQGyJhwByjq6S_2CnQ" },
+      { id: 583, title: "先天性心脏病遗传病因学概览（王若光20221105）", url: "https://mp.weixin.qq.com/s/oUCKcW9vxT7D2ra1gV63CA" },
+      { id: 584, title: "多囊卵巢综合征——与现实和想象不一样", url: "https://mp.weixin.qq.com/s/oXZYlMdyIJdf5FfpsHUAcA" },
+      { id: 585, title: "子宫内膜异位症蜕膜化缺陷与生殖、妊娠病理", url: "https://mp.weixin.qq.com/s/tr2CKUnt-mv-OHVqJ15ArA" },
+      { id: 586, title: "胎停、流产的中西医结合认知与遗传咨询和应对（王若光）", url: "https://mp.weixin.qq.com/s/6N4w41wxvI1egWbTWES08Q" },
+      { id: 587, title: "王若光《胎停、流产中西医结合认知、遗传咨询和临床应对》", url: "https://mp.weixin.qq.com/s/OZRiAWomH94RSCfFBW8efg" },
+      { id: 588, title: "王若光：生殖节律化与多囊卵巢综合征（丁香播咖20221115田秦杰邓珊教授）", url: "https://mp.weixin.qq.com/s/qEMIZJLtW6P4VsaXsheX7A" },
+      { id: 589, title: "临床基因检测报告解读培训（基础篇-1）：网络资源使用篇", url: "https://mp.weixin.qq.com/s/5NFOBxaoeikO8vc-lmwZ2Q" },
+      { id: 590, title: "子宫内膜异位症相关生殖病理后果（王若光20221126香港大学深圳医院会议）", url: "https://mp.weixin.qq.com/s/loU2Qnjm3CFR_muZcrheuw" },
+      { id: 591, title: "香港大学深圳医院会议：子宫内膜异位症相关生殖病理后果", url: "https://mp.weixin.qq.com/s/WM9SjV29axSdJq5ArGkJ2w" },
+      { id: 592, title: "复发性流产遗传病因与分析（王若光20221126岳阳市风湿免疫病专委会议）", url: "https://mp.weixin.qq.com/s/5jaYZK6xM-SIO3n4TlqGXA" },
+      { id: 593, title: "反复流产的遗传病因分析与遗传咨询（王若光20221126）", url: "https://mp.weixin.qq.com/s/owCTqV9RpkPX7mpc-fxLJA" },
+      { id: 594, title: "新冠病毒感染防治3E原则、特殊人群仍要防控CICS", url: "https://mp.weixin.qq.com/s/QPATEgkXR6aFwsYekfbgbw" },
+      { id: 595, title: "2022.12.16-12.17贵州省医学会生殖医学与遗传学分会第十三次学术交流会暨不孕不育与生殖内分泌培训班", url: "https://mp.weixin.qq.com/s/lI23dX_xdpmOaewbbMRsEQ" },
+      { id: 596, title: "子宫内膜异位症分子病理与临床后果（湖南妇科内分泌年会20221203）王若光课件", url: "https://mp.weixin.qq.com/s/GjEpkk9edRRelcYYuTsRAQ" },
+      { id: 597, title: "SARS-CoV-2 RNA病毒及变异株防治（若光医学研究中心方案）", url: "https://mp.weixin.qq.com/s/Zlv0kmdkd8XB_hUVAUrRaw" },
+      { id: 598, title: "子宫内膜异位症分子病理与临床后果（湖南妇分泌年会1203）", url: "https://mp.weixin.qq.com/s/GgnorAcOIjdEiNFg4cz8vA" },
+      { id: 599, title: "子宫内膜异位症患者孕中期突发耳聋案例讨论20221209", url: "https://mp.weixin.qq.com/s/38kd1zodJ2wJxsK588dCMg" },
+      { id: 600, title: "子宫内膜异位症患者孕中期突发耳聋案例讨论（20221209）", url: "https://mp.weixin.qq.com/s/I9wdaPDRFjOY_14D7_b3rA" },
+      { id: 601, title: "阻止重症与感染后恢复：SARS-CoV-2  RNA病毒感染防控体会【若光云医学科技】", url: "https://mp.weixin.qq.com/s/IeIZI8TZf-IsvkB3e3h_6Q" },
+      { id: 602, title: "新冠预防重症用药经验分享", url: "https://mp.weixin.qq.com/s/eTCAQFUDtfDfRfL6w907Xg" },
+      { id: 603, title: "一个罕见病合并多种基础疾病的患者，抗击新冠感染的过程", url: "https://mp.weixin.qq.com/s/D7j9_VFHWiAD-DWgqvJ6FQ" },
+      { id: 604, title: "新冠感染及其后遗症应对，感染后续认知【若光云医学】——写给那些没有用抗病毒药的人及受累于后遗症的人", url: "https://mp.weixin.qq.com/s/HTP6KhTUjoU9nTi0v-jWUQ" },
+      { id: 605, title: "新冠病毒感染对男女生殖及妊娠影响实践观察【若光云医学科技】", url: "https://mp.weixin.qq.com/s/dn7vRTAKx_9YMiQW9ppmYw" },
+      { id: 606, title: "【陕西省第二届生殖医学（辅助生殖）创新技术高峰论坛】20230218", url: "https://mp.weixin.qq.com/s/vvCOqmnOeihaar2tdL97_g" },
+      { id: 607, title: "重视遗传学因素导致的胎停和流产——为什么是胎停流产的最重要因素？", url: "https://mp.weixin.qq.com/s/alXEvKn4ZNsPYSeqyXeWMA" },
+      { id: 608, title: "流产的遗传病因学分析与咨询（王若光课件，20221216贵州生殖医学会议）", url: "https://mp.weixin.qq.com/s/la3eXLrTyG55JTUbz-w-Ew" },
+      { id: 609, title: "视频：流产的遗传病因学分析与咨询（王若光20221216）", url: "https://mp.weixin.qq.com/s/alJnsnchmdSxg27UA50b5Q" },
+      { id: 610, title: "复发性流产病因分析（王若光20221219郴州）", url: "https://mp.weixin.qq.com/s/8xO0jzHt0E7FcByKmk8NIw" },
+      { id: 611, title: "此次妊娠失败与再次妊娠（备孕）一体化理论的提出", url: "https://mp.weixin.qq.com/s/yyKv38oaKE-uxdsb0uU6aw" },
+      { id: 612, title: "子宫内膜息肉，子宫内膜异位症，腺肌症与腺肌瘤，子宫肌瘤等为什么具有病理生理机制的同向性", url: "https://mp.weixin.qq.com/s/fMw0eV2NL9BF5LW7pulg8A" },
+      { id: 613, title: "王若光复发性流产患者免疫相关检查意义与应对2.18西安", url: "https://mp.weixin.qq.com/s/Xcv-Ygw0vIeR9CuVEN6Rvw" },
+      { id: 614, title: "王若光课件：复发性流产患者免疫相关检查意义与应对【20230218陕西省第二届生殖医学（辅助生殖）创新技术高峰论坛】", url: "https://mp.weixin.qq.com/s/YK_BQmd6O_OSAvBeOv-pOw" },
+      { id: 615, title: "课程内容解读：复发性流产患者免疫相关检查意义与应对", url: "https://mp.weixin.qq.com/s/Yzu2-zcYfiO7baXIHXbiXw" },
+      { id: 616, title: "喝豆浆真的会加重乳腺增生和加重肌瘤和巧克力囊肿吗？", url: "https://mp.weixin.qq.com/s/y-mWBdWceK6oio-rXvo2vw" },
+      { id: 617, title: "所有妊娠成功均是以胚胎或胎儿质量及母胎健康安全为基础——3月21日世界唐氏综合征日", url: "https://mp.weixin.qq.com/s/NP7Pb_VaUSVX8XSh947NYw" },
+      { id: 618, title: "【会元遗传&若光云医】第60场 SCENE 60 2023生育健康-医学遗传 MDT会诊", url: "https://mp.weixin.qq.com/s/tHTMxyGdiMrynIW49IEhDA" },
+      { id: 619, title: "ω-3脂肪酸在妊娠期管理的应用", url: "https://mp.weixin.qq.com/s/C-kOWtRLOMEIibOj9KoGdw" },
+      { id: 620, title: "“记住你即将死去”--史蒂夫•乔布斯在斯坦福大学的演讲", url: "https://mp.weixin.qq.com/s/m4kxDLtF-OemlO2B0aujfA" },
+      { id: 621, title: "老友课堂第27期|子宫内膜异位症合并多囊卵巢综合征", url: "https://mp.weixin.qq.com/s/WpeRUOL5kqTHI_Hj5i_FxQ" },
+      { id: 622, title: "第十二届中国罕见病高峰论坛2023年9月8-10日湖南长沙", url: "https://mp.weixin.qq.com/s/87Dz84N2mdj-GNRLdV81vg" },
+      { id: 623, title: "第61期MDT | 遗传性异常纤维蛋白原血症、复发流产病例讨论", url: "https://mp.weixin.qq.com/s/6BU2b2kPEZbuyhB2P9ZiiA" },
+      { id: 624, title: "NLRP7复发葡萄胎复发流产病例讨论", url: "https://mp.weixin.qq.com/s/yaiQcGxEZboIxjsAsPNZ2w" },
+      { id: 625, title: "凝血因子缺陷与遗传性易栓症（王若光）2023-04-21（周五）晚", url: "https://mp.weixin.qq.com/s/15Id24m7wPvDRbjFOJxc1A" },
+      { id: 626, title: "表型对立与分子病理生理关联：子宫内膜异位症合并多囊卵巢综合征，EMS合并代谢性生殖病理及排卵障碍", url: "https://mp.weixin.qq.com/s/OuzPhgtSX31L7FAqQiNbpQ" },
+      { id: 627, title: "会元遗传专家委员会成立", url: "https://mp.weixin.qq.com/s/8RZq-QYhR9J8iYh5rsQ-wA" },
+      { id: 628, title: "2023第十二届中国罕见病高峰论坛报名通道开启 | 罕路同行 湘约未来", url: "https://mp.weixin.qq.com/s/ZpPPlH876WdPPQl1Ml-XRA" },
+      { id: 629, title: "凝血因子缺陷与遗传性易栓症", url: "https://mp.weixin.qq.com/s/fVvKDcla5cDwd2RlXzlzZw" },
+      { id: 630, title: "表型对立与分子病理生理关联：子宫内膜异位症合并多囊卵巢综合征（EMS合并代谢性生殖病理及排卵障碍，或误诊PCOS）", url: "https://mp.weixin.qq.com/s/yxuVLgK85NR5XJdVcu99Ww" },
+      { id: 631, title: "生殖系统遗传病（王若光课件）【生殖健康咨询师（遗传咨询）专项能力培训班】", url: "https://mp.weixin.qq.com/s/J0yEiYIMYfP8qSSrQvTikg" },
+      { id: 632, title: "生殖健康咨询（遗传咨询方向）专项能力提升培训班【开始招生啦】", url: "https://mp.weixin.qq.com/s/K2cXLM5Di-9gBSgb7FH9Dw" },
+      { id: 633, title: "生殖健康咨询师职业介绍", url: "https://mp.weixin.qq.com/s/TN9c4Wnz9mEWFtwFiYWQww" },
+      { id: 634, title: "王若光：多囊卵巢综合征长期误区及其病理生理复杂化渐进演变", url: "https://mp.weixin.qq.com/s/b-c_D9MY_gakGGgZiCKj0A" },
+      { id: 635, title: "王若光：子宫内膜异位症相关生殖复杂病理后果", url: "https://mp.weixin.qq.com/s/RHtURRgxsE98gv0EwLjGiA" },
+      { id: 636, title: "性发育调控与DSD（性发育差异）（王若光课件）", url: "https://mp.weixin.qq.com/s/PY44VARcNwqDbTKe0FsLhw" },
+      { id: 637, title: "遗传咨询能力提升培训&职业技能鉴定", url: "https://mp.weixin.qq.com/s/IyBLqHH1em01XMkf4i-NXQ" },
+      { id: 638, title: "若光医学研究中心门诊预约：若光云医学预约小程序全面升级", url: "https://mp.weixin.qq.com/s/L5XbcZ7p37hIcabeWlGQig" },
+      { id: 639, title: "澳洲常毓晨博士：TBX20 移码突变的评级&表型（第63场2023生育健康-医学遗传 MDT会诊）", url: "https://mp.weixin.qq.com/s/PqMS2q7vtpbSmMxXmAsNkQ" },
+      { id: 640, title: "子宫内膜异位症中的孕激素抵抗可能是一种获得性特性(万丽琴译)", url: "https://mp.weixin.qq.com/s/LLHE4k62UpKsYg141TGBKQ" },
+      { id: 641, title: "子宫内膜异位症的雌激素受体-β、雌激素受体-α和孕激素抵抗（万丽琴译）", url: "https://mp.weixin.qq.com/s/hLjbGxhkWuKj6ZHt4NtPhw" },
+      { id: 642, title: "生殖健康遗传咨询（北京）班培训20230715-16开班了", url: "https://mp.weixin.qq.com/s/N47P_k91IjtOM_PXZvAmuA" },
+      { id: 643, title: "IL-33通过17β-雌二醇激活ST2/MAPK/MMP-9通路增强人卵巢子宫内膜异位症基质细胞的侵袭（万丽琴译）", url: "https://mp.weixin.qq.com/s/hiybGvNAF8AMII_pOE57ug" },
+      { id: 644, title: "生殖健康遗传咨询（北京班）培训20230715-16日圆满结束", url: "https://mp.weixin.qq.com/s/m0PTsQ2SoEqz7cbzNx-EOw" },
+      { id: 645, title: "重庆班招生简章 | 生殖健康咨询（遗传咨询方向）专项能力提升培训班（2023年9月16-17日）", url: "https://mp.weixin.qq.com/s/6N7V3PJ-93jFVvDWyhLfCg" },
+      { id: 646, title: "新疆名医，妇产科临床著名专家张君娴主任加盟若光医学研究中心团队", url: "https://mp.weixin.qq.com/s/9N_g4zwDxgXhGqVqgoNNBg" },
+      { id: 647, title: "正念堂养生馆开业", url: "https://mp.weixin.qq.com/s/XNW18SLzCUcdDJi8rbCCNQ" },
+      { id: 648, title: "流产的遗传病因学分析与咨询（王若光20230729大连）", url: "https://mp.weixin.qq.com/s/m0MCRt1P5ulqIN90CFMmDA" },
+      { id: 649, title: "数十位专家邀您参与罕见病生殖发育专题会", url: "https://mp.weixin.qq.com/s/uF18P5UPLLEf3YALbDTj1g" },
+      { id: 650, title: "王静：子宫内膜异位症是雌激素介导的免疫炎症反应（一）（EMS国际研究进展荟萃与若光观点合集）", url: "https://mp.weixin.qq.com/s/rvXPCSHQl3WKJ5qSzauJWg" },
+      { id: 651, title: "数十位专家邀您参与罕见病生殖发育专题会", url: "https://mp.weixin.qq.com/s/MupMzhARemceiNBacLHVLA" },
+      { id: 652, title: "讲者阵容公布！150余位嘉宾与您相约中国罕见病高峰论坛", url: "https://mp.weixin.qq.com/s/nbMWGbZSkWbBmc_UbPZmTA" },
+      { id: 653, title: "EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（二）（1）（子宫内膜异位症国际研究进展荟萃与若光观点合集）", url: "https://mp.weixin.qq.com/s/EO8wXXqoxT-fol-QR2SNNQ" },
+      { id: 654, title: "子宫内膜异位症是雌激素介导的免疫炎症反应，使之具有独一无二的特征（二）（2）（EMS国际研究进展荟萃与若光观点合集）", url: "https://mp.weixin.qq.com/s/IiMw7scyT9cc4b8ABUv5zg" },
+      { id: 655, title: "全议程！第十二届中国罕见病高峰论坛倒计时三天！", url: "https://mp.weixin.qq.com/s/A97jdJATUYyZFde-1UoMrg" },
+      { id: 656, title: "子宫内膜异位症研究进展与若光观点合集（1-3），EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/3vgT5_APE8u2oUIx7gNoOA" },
+      { id: 657, title: "罕见病生殖发育专题会（9月8日-10日第十二届中国罕见病高峰论坛）", url: "https://mp.weixin.qq.com/s/vvHzNuBjZRrGR9I4FWo-8Q" },
+      { id: 658, title: "子宫内膜异位症研究进展与若光观点合集（4-6），EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/81DJ6OuVyxrJGL22zYkgSA" },
+      { id: 659, title: "子宫内膜异位症研究进展与若光观点合集（7-9），EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/jodA3e6Akc2hS6nhYLSSZA" },
+      { id: 660, title: "子宫内膜异位症研究进展与若光观点合集（10-12），EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/RPJbDr4BFjMSuZe3umREeg" },
+      { id: 661, title: "性发育调控与DSD（性发育差异）（2023长沙罕见病高峰论坛，王若光课件）", url: "https://mp.weixin.qq.com/s/MbaedRrMwCTuJewbLbNDMQ" },
+      { id: 662, title: "性发育调控与DSD（性发育差异）（2023长沙罕见病高峰论坛，王若光课件）", url: "https://mp.weixin.qq.com/s/yan3yCCgEzFGU_Lw_QWuoA" },
+      { id: 663, title: "子宫内膜异位症研究进展与若光观点合集（13-15）EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/IL3F0Hzdx7o3sGH9wsMMhQ" },
+      { id: 664, title: "子宫内膜异位症研究进展与若光观点合集（16-18）EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/4xFdNfu7a0ot1Prt8chogg" },
+      { id: 665, title: "子宫内膜异位症研究进展与若光观点合集（19-23）EMS是雌激素介导的免疫炎症反应，使之具有独一无二的特征（三）", url: "https://mp.weixin.qq.com/s/cAaatiCBV0jM2H2-Uv590Q" },
+      { id: 666, title: "名医专家张君娴主任带领若光医药医护人员参加社区组织的送医进社区活动", url: "https://mp.weixin.qq.com/s/dp6_re6n5EmMscsEA3_AeA" },
+      { id: 667, title: "王若光：子宫内膜异位症相关生殖病理后果（20231022深圳市中医药学会整合生殖医学专业委员会课件）", url: "https://mp.weixin.qq.com/s/byxaNDs2X0r5bDye1Hz3DQ" },
+      { id: 668, title: "20231022深圳市妇幼：EMS相关生殖病理后果（王若光）", url: "https://mp.weixin.qq.com/s/ysnSBS7M5siWeoWVpQJxiQ" },
+      { id: 669, title: "港台名超声专家邱伟修博士2023年10月31日（周二）长沙若光医学研究中心学术交流与超声会诊会", url: "https://mp.weixin.qq.com/s/9wc4FM0Ahe4K--ZpDX6FGQ" },
+      { id: 670, title: "《临床遗传学高级专题（二）：生殖内分泌不孕、流产、病理妇产科与出生缺陷》大会", url: "https://mp.weixin.qq.com/s/xQySlnQdD7V_m-T_RK4zuA" },
+      { id: 671, title: "邱伟修博士来长沙若光医学研究中心学术交流与超声会诊（20231031）", url: "https://mp.weixin.qq.com/s/Riue8TJzqI7OUQfzQkgxSQ" },
+      { id: 672, title: "临床遗传学高级专题（二）《生殖内分泌不孕、流产、病理妇产科与出生缺陷》系列课程", url: "https://mp.weixin.qq.com/s/_l5TE5TnYDHlc8z3gp5XUQ" },
+      { id: 673, title: "2023年11月19日下午2点，主题一：性发育异常或性发育差异DSD", url: "https://mp.weixin.qq.com/s/U4vnlaCd_ZziFukwrHoHvw" },
+      { id: 674, title: "2023年11月26日（周日）张君娴主任和王静、欧罗丹医生答疑会", url: "https://mp.weixin.qq.com/s/UjimlpuFVDUkxQJfoNsg0g" },
+      { id: 675, title: "20231126周日下午14:00-17:00专题二、PCOS与生殖及其内分泌的节律化有序化和同步化（二期临床遗传学高级专题）", url: "https://mp.weixin.qq.com/s/XItz1zw-u_DZF5gZqAqUPQ" },
+      { id: 676, title: "湖南长沙班| 生殖健康（遗传咨询方向）专项能力提升培训班招生简章", url: "https://mp.weixin.qq.com/s/ClDCYP1giyAqsHgJnWbTlQ" },
+      { id: 677, title: "内异症生殖病理与后果及ESHRE指南更新2022甘肃省妇幼20231229周三晚4", url: "https://mp.weixin.qq.com/s/ZG8Hu5EekTQWXOM3u16pvQ" },
+      { id: 678, title: "20231203周日下午14:00-17:00专题三、EMS生殖病理及EMS合并PCOS（二期临床遗传学高级专题）", url: "https://mp.weixin.qq.com/s/OYD-rrjgxeGLBnMqL002uA" },
+      { id: 679, title: "ALIFE2国际多中心研究建议对复发性流产和遗传性易栓症患者停止使用肝素治疗", url: "https://mp.weixin.qq.com/s/VVAGAJ0LuGYzPeXV4Fq1cQ" },
+      { id: 680, title: "20231203周日下午14:00-17:00专题四、胎停，流产，复发性流产及长期不孕（二期临床遗传学高级专题）", url: "https://mp.weixin.qq.com/s/Y_kD0IKDYpzcbZhtbUlDGA" },
+      { id: 681, title: "7年保胎路，4次不良孕产史，终圆“妈妈”梦”", url: "https://mp.weixin.qq.com/s/eZAA_GDcxyQHS5qVallssA" },
+      { id: 682, title: "2023年12月10日（周日）张君娴主任和尚姣、戴婧医生答疑会", url: "https://mp.weixin.qq.com/s/d8gRyKK8jmOPFZA7nx0XrA" },
+      { id: 683, title: "胎停2次、生化妊娠1次，崩溃哭涕终圆满。", url: "https://mp.weixin.qq.com/s/Gp3MFMRYno2SDjaOfDmW_A" },
+      { id: 684, title: "临床遗传学高级专题（二）：生殖内分泌不孕、流产、病理妇产科与出生缺陷", url: "https://mp.weixin.qq.com/s/MtnwF5-tYMdMm8lRmlwgGQ" },
+      { id: 685, title: "妇科与生殖内分泌之：PCOS Review &若光观点—应对多囊卵巢综合征挑战（目录）", url: "https://mp.weixin.qq.com/s/EcrH72MRM10nGf8dQ4lN3g" },
+      { id: 686, title: "（第一部分）PCOS Review &若光观点——应对多囊卵巢综合征挑战【（一）至（五）】", url: "https://mp.weixin.qq.com/s/MzT2bScPe5EBQ6NH8scyjg" },
+      { id: 687, title: "（第二部分）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（六）至（八）】", url: "https://mp.weixin.qq.com/s/GAd6NsE15jNN_x__AJtfsg" },
+      { id: 688, title: "（第三部分）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（九）至（13.9）】", url: "https://mp.weixin.qq.com/s/jVuf1LZB3zCZM-scxSxSMg" },
+      { id: 689, title: "（第四部分上）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（13.10）至（13.12.7）】", url: "https://mp.weixin.qq.com/s/3BZK8kjxDykozCNE7dtNRw" },
+      { id: 690, title: "十五年艰辛求子路，45岁高龄终如愿！", url: "https://mp.weixin.qq.com/s/PZ2_4D5141z4P6sqpjjfSw" },
+      { id: 691, title: "（第四部分中A）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（13.12.8）至（13.14.8）】", url: "https://mp.weixin.qq.com/s/VC9gImEcQkbH7SIt6A-BQg" },
+      { id: 692, title: "（第四部分中B）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（13.15）至（13.19.4）】", url: "https://mp.weixin.qq.com/s/H5mFBLVIGrMrqlDUCGvOvQ" },
+      { id: 693, title: "（第四部分中C）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（13.20）至（13.25.7.3）】", url: "https://mp.weixin.qq.com/s/t_Roi7i0zyGAquOMO94Sgg" },
+      { id: 694, title: "2023年12月24日上午9:30张君娴等患友答疑会，下午14:00阻止大月份流产会议", url: "https://mp.weixin.qq.com/s/770AjT-KNOo-XeWsrazOsg" },
+      { id: 695, title: "（第四部分下）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（13.26）至（13.29.8）】", url: "https://mp.weixin.qq.com/s/PxTi845RoHy3DNWEQj_ZZQ" },
+      { id: 696, title: "（第五部分上）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（十四）至（14.6.14）】", url: "https://mp.weixin.qq.com/s/9vimjwDmrxgjOdA_N_uKuw" },
+      { id: 697, title: "（第五部分中）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（十五）至（16.4）】", url: "https://mp.weixin.qq.com/s/yG1-abOux67fXTrxCm0BuQ" },
+      { id: 698, title: "（第五部分下）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（十七）至（17.2.17）】", url: "https://mp.weixin.qq.com/s/PUJ1kOhUJZ2pwxvrYHkAww" },
+      { id: 699, title: "（第六部分上）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（十八）至（二十三）】", url: "https://mp.weixin.qq.com/s/3pwWa-zEzeVnD8p6IOwfrA" },
+      { id: 700, title: "（第六部分下）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（二十四）至（24.13）】", url: "https://mp.weixin.qq.com/s/ted313DWewnwSRUqtDJ6ww" },
+      { id: 701, title: "（第七部分）多囊卵巢综合征进展与若光观点——应对PCOS挑战【（二十五）至（二十六）】全文终", url: "https://mp.weixin.qq.com/s/OsMJ-4rELzIQemeRHdKqgQ" },
+      { id: 702, title: "主题八：出生缺陷与产前诊断及母胎医学", url: "https://mp.weixin.qq.com/s/gE1GbVpgXmZSUKlVWXQ4_g" },
+      { id: 703, title: "王若光：子宫内膜异位症，子宫肌瘤，腺肌症，内膜息肉，在病理生理上具有同向性，遗传学上具有共同起源", url: "https://mp.weixin.qq.com/s/Uvrdq3S7s2kMj6ZllAtlTw" },
+      { id: 704, title: "子宫内膜异位症损伤卵母细胞，妊娠胚胎非整倍率增加", url: "https://mp.weixin.qq.com/s/XkWi9kUgQX_kb9jjqj2rUw" },
+      { id: 705, title: "甲状腺与生殖——子宫内膜异位症与甲状腺炎", url: "https://mp.weixin.qq.com/s/Sij895m4_qslThl1WotiRg" },
+      { id: 706, title: "子宫内膜异位症三腺损伤及多内分泌腺病理关联", url: "https://mp.weixin.qq.com/s/WPZVkGThCBugcmf21rArLg" },
+      { id: 707, title: "子宫内膜异位症与前列腺素", url: "https://mp.weixin.qq.com/s/a9zqf1LUhQV7OPq6VMftww" },
+      { id: 708, title: "子宫内膜异位症与CA125", url: "https://mp.weixin.qq.com/s/MWGECV8gn2NOxgd3gpDkMw" },
+      { id: 709, title: "子宫内膜异位症是反复种植失败的主因", url: "https://mp.weixin.qq.com/s/xZMXhwr8ugMIlKL_K_zN3A" },
+      { id: 710, title: "中国女性洁净计划", url: "https://mp.weixin.qq.com/s/9raH-N25dKW0AQIC6v2dTA" },
+      { id: 711, title: "子宫内膜异位症与生化妊娠，胎停，流产，复发性流产", url: "https://mp.weixin.qq.com/s/96t2_Ev8NP0LhqFYVdgjMg" },
+      { id: 712, title: "子宫内膜异位症起源，点燃与病理进展（环境内分泌干扰物）", url: "https://mp.weixin.qq.com/s/fxK6rjgitnpm4khpM-Q7Qg" },
+      { id: 713, title: "子宫内膜异位症与先天子宫畸形", url: "https://mp.weixin.qq.com/s/tCqtshTOpkH3ri_qf7hZqQ" },
+      { id: 714, title: "子宫内膜异位症及PCOS与子宫异常出血（AUB），雌效应，低雄，孕激素抵抗及PALM-COEIN系统", url: "https://mp.weixin.qq.com/s/tntAiLuMa1spR-IAIx-GyA" },
+      { id: 715, title: "子宫内膜异位症表型证据链", url: "https://mp.weixin.qq.com/s/fH-fpCKlo0HB-dKQt1Lk9g" },
+      { id: 716, title: "子宫内膜异位症与多囊卵巢综合征", url: "https://mp.weixin.qq.com/s/q_XUjn8qqmBmbEND3jNOJQ" },
+      { id: 717, title: "子宫内膜异位症相关免疫炎症", url: "https://mp.weixin.qq.com/s/TgNBnc_maUD1qiYOe1XIaA" },
+      { id: 718, title: "子宫内膜异位症和腺肌症相关产科病理损害——子宫内膜异位症和腺肌症应为长期不孕及妊娠失败第一原因", url: "https://mp.weixin.qq.com/s/KzU32eCA62jMPTa784PeoA" },
+      { id: 719, title: "王若光：阻止大月分流产和早产", url: "https://mp.weixin.qq.com/s/txvs79zWgcDwE_K5kgd5pw" },
+      { id: 720, title: "北京6.15-16|生殖健康（遗传咨询方向）专项技能培训班暨医学遗传咨询从业人员培训班", url: "https://mp.weixin.qq.com/s/hQKdBnHDrWT4hTozl20fjA" },
+      { id: 721, title: "复发性流产中血栓性疾病的诊疗与全孕期管理", url: "https://mp.weixin.qq.com/s/nbi3sldt2C_5BG7mAapGwg" },
+      { id: 722, title: "为什么NK（自然杀伤）细胞是不够的——NK细胞相关免疫与妊娠维持、免疫耐受及流产（上篇）", url: "https://mp.weixin.qq.com/s/1rvjqVo7U8W3FXpFThqWxQ" },
+      { id: 723, title: "为什么NK（自然杀伤）细胞是不够的——NK细胞相关免疫与妊娠维持、免疫耐受及流产（中）", url: "https://mp.weixin.qq.com/s/BeAB-4bR-jf7Erdzd1eNCg" },
+      { id: 724, title: "为什么NK（自然杀伤）细胞是不够的——NK细胞相关免疫与妊娠维持、免疫耐受及流产（下）", url: "https://mp.weixin.qq.com/s/QX1AADXnDEUl3rzjj3UJoA" },
+      { id: 725, title: "为什么NK（自然杀伤）细胞是不够的——NK细胞相关免疫与妊娠维持、免疫耐受及流产（尾篇）", url: "https://mp.weixin.qq.com/s/3hOYG5GpQy30PizWsI_3IQ" },
+      { id: 726, title: "科学向善，每一个生命都是天空中闪亮的星辰", url: "https://mp.weixin.qq.com/s/IQLgYCXhJTeyjINDc88izA" },
+      { id: 727, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、1）", url: "https://mp.weixin.qq.com/s/GCeLELs7zdDXGm3iLNkNfA" },
+      { id: 728, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、2）", url: "https://mp.weixin.qq.com/s/LTw4-iIlZF8RSFrITsAhRw" },
+      { id: 729, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、3）", url: "https://mp.weixin.qq.com/s/SISZyoT99lRj2A7o1G8ZCA" },
+      { id: 730, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、4）", url: "https://mp.weixin.qq.com/s/y7EKCSScDKdEgw9rASdwQg" },
+      { id: 731, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、5）", url: "https://mp.weixin.qq.com/s/-ivfJ_TKekIH0bhMzmZGpw" },
+      { id: 732, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、6）", url: "https://mp.weixin.qq.com/s/4dyb5WJd23wNb6VZWKE-Og" },
+      { id: 733, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、7）", url: "https://mp.weixin.qq.com/s/OTuHo5EyzKsZ2_t2v-Pobg" },
+      { id: 734, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、8）", url: "https://mp.weixin.qq.com/s/MEUEOd5EpGLutmS85fJKaA" },
+      { id: 735, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、9）", url: "https://mp.weixin.qq.com/s/KXuZFWpq0AZbds52H8XHnQ" },
+      { id: 736, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（一、10）", url: "https://mp.weixin.qq.com/s/_ZwuTWwHiZy2t6Lv_-6wEg" },
+      { id: 737, title: "生殖免疫的核心：子宫内膜异位症和腺肌症的免疫炎症、生殖破坏、妊娠失败等相关病理生理（二、1）", url: "https://mp.weixin.qq.com/s/u6ICifNvz41a8lKAFU4eEw" },
+      { id: 738, title: "（二、2）蜕膜化评分可识别反复妊娠丢失和不明原因不孕女性样本中的子宫内膜功能失调", url: "https://mp.weixin.qq.com/s/6NkbGajOM8S4b5BFlrWQ5g" },
+      { id: 739, title: "（二、3）子宫内膜容受性的免疫决定因素：生物学视角", url: "https://mp.weixin.qq.com/s/gkCA74-sbWagz3hPQC2Cig" },
+      { id: 740, title: "（二、4）子宫内膜容受性的当前观点：病因和治疗的综合概述", url: "https://mp.weixin.qq.com/s/iCXAMfvckdcqw7xx6UEoxQ" },
+      { id: 741, title: "（三、1）难以阻止的宫缩——孕激素抵抗与孕激素效应不足的相关机制", url: "https://mp.weixin.qq.com/s/zWcGoa0uCWNJaSelLhlaDA" },
+      { id: 742, title: "（二、5）综述慢性子宫内膜炎及其对生殖的影响", url: "https://mp.weixin.qq.com/s/OvgQF0lsn0zZBBMxFiW50A" },
+      { id: 743, title: "（二、6）慢性子宫内膜炎与反复性不孕：系统性回顾与荟萃分析", url: "https://mp.weixin.qq.com/s/ImCL45Ms2EqfsHnKGxgPLQ" },
+      { id: 744, title: "（三、2）炎症和免疫反应在子宫肌瘤发病机制中的作用：包括它们对生殖结局的负面影响", url: "https://mp.weixin.qq.com/s/WkUZy-YrH6HbXJiBXWAOew" },
+      { id: 745, title: "（三、3）子宫息肉、子宫腺肌病、平滑肌瘤和子宫内膜容受性", url: "https://mp.weixin.qq.com/s/A-3tXwUL4Ud41cMVrX7MDg" },
+      { id: 746, title: "（二、7）慢性子宫内膜炎和胚胎植入改变：来自文献系统评价的统一病理生理学理论", url: "https://mp.weixin.qq.com/s/DUbBDDS_bLMj-XOWA_0SYg" },
+      { id: 747, title: "（二、8）慢性子宫内膜炎：老问题、新见解和未来挑战", url: "https://mp.weixin.qq.com/s/8iwGmpf3uik8rk38gL8Hjw" },
+      { id: 748, title: "（二、9）子宫内膜微生物群在胚胎着床和反复着床失败中的作用", url: "https://mp.weixin.qq.com/s/z883lw08Gn5mpy2Tc_Q_gQ" },
+      { id: 749, title: "（二、10）炎症和自身免疫性疾病对子宫内膜和生殖结局的影响", url: "https://mp.weixin.qq.com/s/bYGMsyKSfMsCDUCvy4Qt_g" },
+      { id: 750, title: "（二、11）内分泌干扰化学物在体外会干扰人原代子宫内膜间质细胞的蜕膜化过程", url: "https://mp.weixin.qq.com/s/vC_QAgbEFTDtfxwO8RldmQ" },
+      { id: 751, title: "（二、12）内分泌干扰物对生殖系统的不利影响", url: "https://mp.weixin.qq.com/s/4Kaz6ErsaAp3hSneFOcWRg" },
+      { id: 752, title: "血小板对先天免疫反应的调节", url: "https://mp.weixin.qq.com/s/rVdwittxPKHmYH4MhKM3ow" },
+      { id: 753, title: "（二、13）内分泌干扰物联合作用对人类生殖的生殖毒性", url: "https://mp.weixin.qq.com/s/1Oc-OlDRmXO30gGSzYO6_g" },
+      { id: 754, title: "血小板在免疫介导的炎症性疾病中的作用", url: "https://mp.weixin.qq.com/s/Dx0s-_hCCv9JDowCTZ-o1w" },
+      { id: 755, title: "（二、14）微塑料暴露：对人类生育能力、怀孕和儿童健康的影响（汇综）", url: "https://mp.weixin.qq.com/s/kFsWl0gfwgUsMwivo7-hxQ" },
+      { id: 756, title: "（二、15）子宫重塑中的免疫细胞：它们是内分泌干扰物的靶标吗", url: "https://mp.weixin.qq.com/s/frnsKx4iFpy-19mSd_j5XA" },
+      { id: 757, title: "自身免疫性疾病和动脉粥样硬化性心血管疾病", url: "https://mp.weixin.qq.com/s/B4Lf-Nkst2Prf6Q9nUDkTg" },
+      { id: 758, title: "（二、16）内分泌干扰物与子宫内膜异位症", url: "https://mp.weixin.qq.com/s/RmBzDLptUQFKXqekS-KwEg" },
+      { id: 759, title: "（1）妊娠期抗磷脂综合征：新旧发病机制（APS专辑）", url: "https://mp.weixin.qq.com/s/2JP1zvJDw-HrDTgrHHnDTA" },
+      { id: 760, title: "（4）细胞外 DNA NET-works 对健康造成可怕的后果（炎症-免疫-凝血网络，专辑）", url: "https://mp.weixin.qq.com/s/_iiSQ5b8J_B-T1q_HaSO9A" },
+      { id: 761, title: "（二、17）环境内分泌干扰物暴露与子宫内膜异位症和子宫腺肌病发展之间的潜在关系", url: "https://mp.weixin.qq.com/s/1H0kqeZfUobEpLHCzGap4A" },
+      { id: 762, title: "（二、18）选定的饮食因素在子宫内膜异位症的发展和病程中的作用", url: "https://mp.weixin.qq.com/s/YM941GxMLPqWGSn-3yt1lQ" },
+      { id: 763, title: "（2）抗磷脂综合征患者的抗磷脂抗体（APS专辑）", url: "https://mp.weixin.qq.com/s/lIeQs-TIqWv-w02V-ebeYg" },
+      { id: 764, title: "（27）血小板病理生理学：意想不到的新研究方向（炎症-免疫-凝血网络，专辑）", url: "https://mp.weixin.qq.com/s/0Kap8qPcoa16rqRq-DYFJA" },
+      { id: 765, title: "（二、19）子宫内膜在植入中的作用：现代观点", url: "https://mp.weixin.qq.com/s/sdqSB7RS8IfBbA1zHD1jaA" },
+      { id: 766, title: "（5）血小板作为神经炎症和血栓形成的介质（炎症-免疫-凝血网络，专辑）", url: "https://mp.weixin.qq.com/s/BQwz8UbzNXF3Mw1KzTRk3g" },
+      { id: 767, title: "（3）抗磷脂抗体和抗磷脂综合征", url: "https://mp.weixin.qq.com/s/Pi1T0fSOuouuKpARwbifQw" },
+      { id: 768, title: "（二、20）慢性子宫内膜炎免疫微环境的研究进展", url: "https://mp.weixin.qq.com/s/NKfS2J3ulM_oxxGXpPMlNw" },
+      { id: 769, title: "（6）急性和长期（新冠） COVID-19 血栓形成的病理生理机制", url: "https://mp.weixin.qq.com/s/H5-QKMNcdREwoDt8gd2kEA" },
+      { id: 770, title: "（31）褪黑激素：胎盘抗氧化和抗炎", url: "https://mp.weixin.qq.com/s/w16Jhh9XPSt5JcIXqBrYWA" },
+      { id: 771, title: "（4）2023 年抗磷脂综合征的发病机制：新机制的更新还是只是重新考虑旧机制？", url: "https://mp.weixin.qq.com/s/FL8bypb1I5e5epWSeUv_Qw" },
+      { id: 772, title: "（二、21）炎症反应对生殖的有害和有益影响：无菌和病原体相关炎症", url: "https://mp.weixin.qq.com/s/-VnAHa-WnQ150qdYr3BRig" },
+      { id: 773, title: "（5、1）抗磷脂综合征：分子机制和临床表现洞察", url: "https://mp.weixin.qq.com/s/1Uwi25M8fsYjV9rbmAayxg" },
+      { id: 774, title: "（37）褪黑激素在昼夜节律调节和疾病管理中的意义", url: "https://mp.weixin.qq.com/s/F3lnr3I-9rA6P3FagkjcNg" },
+      { id: 775, title: "（二、22）子宫内膜 microRNA 在反复植入失败中的作用", url: "https://mp.weixin.qq.com/s/BqoETtBULfOgmo9_H4S_HA" },
+      { id: 776, title: "（32）褪黑激素对妊娠血管功能障碍的超生理作用，一种新的治疗剂？", url: "https://mp.weixin.qq.com/s/grLT2o7xKcZwx3q-15O1Dg" },
+      { id: 777, title: "（二、23、1）胎盘：一个具有新功能的古老器官", url: "https://mp.weixin.qq.com/s/YpeJzuV2yTsN14h5a2MU9A" },
+      { id: 778, title: "（33）褪黑素在妊娠中的作用及其对新生儿的健康益处", url: "https://mp.weixin.qq.com/s/CAWkjImRhdJEuHIGm1QMmg" },
+      { id: 779, title: "（5、2）抗磷脂综合征血栓形成的病理生理学进展：通过脂筏的分子机制和信号传导", url: "https://mp.weixin.qq.com/s/WPnGPRKdUI1_nXbET1A5_w" },
+      { id: 780, title: "（二、30、5）人子宫内膜的分化", url: "https://mp.weixin.qq.com/s/55tKdUx1MCHd8qTPeaX49g" },
+      { id: 781, title: "（二、23、2）人类胚胎植入", url: "https://mp.weixin.qq.com/s/5VXUYm75JRvRQeYT2vcHMQ" },
+      { id: 782, title: "（34、1）褪黑激素与健康：褪黑激素作用、生物学功能和相关疾病的见解", url: "https://mp.weixin.qq.com/s/c0lFUB--x9gQ50ik7ZXZ1A" },
+      { id: 783, title: "（6）抗磷脂综合征患者血栓复发高风险的生物标志物：文献综述", url: "https://mp.weixin.qq.com/s/6xboACUf3vpAkQ84EbCz6Q" },
+      { id: 784, title: "（34、2）褪黑激素和维生素 D 作为癌症治疗的潜在协同辅助剂", url: "https://mp.weixin.qq.com/s/m8FTeIhgZ_AcEGU6pQmL5Q" },
+      { id: 785, title: "（二、24、1）胚胎移植中子宫内膜容受性阵列的全面综述：进展、应用和临床结果", url: "https://mp.weixin.qq.com/s/2Xna8EoGksREgRO94Hvhfg" },
+      { id: 786, title: "（7）抗磷脂综合征病理生理学中的补体", url: "https://mp.weixin.qq.com/s/Gox8-rCIkgwSP9TyJ9_MMg" },
+      { id: 787, title: "（35）褪黑素及其代谢产物在神经保护和延缓脑衰老中的重要作用", url: "https://mp.weixin.qq.com/s/oecg_0PQ6Ku8qAdnXuCYVA" },
+      { id: 788, title: "王若光：复发性流产患者免疫相关检查意义与应对（课件）", url: "https://mp.weixin.qq.com/s/kMHt_M5akaUINT7keGZcTQ" },
+      { id: 789, title: "王若光：慢性子宫内膜炎及其对生殖的影响（20241026深圳妇幼会议课件）", url: "https://mp.weixin.qq.com/s/CClCrZnwH_m1Go_b5lb2Uw" },
+      { id: 790, title: "王若光：慢性子宫内膜炎及其对生殖的影响20241026深圳", url: "https://mp.weixin.qq.com/s/1b1qj97Wi4P8U7xOQlMyEQ" },
+      { id: 791, title: "（1）妊娠早期自然流产中染色体变异的患病率", url: "https://mp.weixin.qq.com/s/Y780CBEHny_efdALI5btsA" },
+      { id: 792, title: "（二、24、2）整倍体胚胎移植周期中子宫内膜容受性阵列的全面综述", url: "https://mp.weixin.qq.com/s/fDq893EPtHBHBj-k-gvIdg" },
+      { id: 793, title: "（7、1）血小板在炎症中心枢纽中的作用：文献综述", url: "https://mp.weixin.qq.com/s/7yVBe5sJNRvi1DjwrKxRMQ" },
+      { id: 794, title: "（8）抗磷脂综合征中动脉粥样硬化血栓形成的新生物标志物：基因组学和表观遗传学方法", url: "https://mp.weixin.qq.com/s/LGhsxWiUAdSTRg_t4QeZuA" },
+      { id: 795, title: "（二、25）转化生长因子β超家族信号与子宫蜕膜化", url: "https://mp.weixin.qq.com/s/afA30EbE2vBgLmRaTaTuuA" },
+      { id: 796, title: "（二、26）子宫内膜TGFβ信号通过重塑母胎界面促进早期妊娠发育", url: "https://mp.weixin.qq.com/s/p4P_h14r7tCBrVifUcW0hw" },
+      { id: 797, title: "（二、27）TGF-β在妊娠和妊娠并发症中的作用", url: "https://mp.weixin.qq.com/s/0fJljnlVKlbVta18Wxiudw" },
+      { id: 798, title: "（36）褪黑素和TGFβ介导的细胞外囊泡释放", url: "https://mp.weixin.qq.com/s/1beTpHAUYaECln_RL8ximA" },
+      { id: 799, title: "（7、2）抗血小板治疗的当前概念和新靶点", url: "https://mp.weixin.qq.com/s/puIbU6WmkCPH2xXbEZDFaw" },
+      { id: 800, title: "（8）2019冠状病毒病（COVID-19）相关血栓形成和凝血病：病理生理学特征和抗血栓治疗意义回顾", url: "https://mp.weixin.qq.com/s/D43FqwDqvWk29pD2igKDiQ" },
+      { id: 801, title: "（9）“抗磷脂抗体”的分子机制及其在“血清阴性 APS”发病机制中的悖论作用", url: "https://mp.weixin.qq.com/s/3HiwkXPM__ZL_J4tVlUh_w" },
+      { id: 802, title: "（10）抗磷脂综合征诊断和管理的困境（案例分析后的诊断标准分析对比讨论）", url: "https://mp.weixin.qq.com/s/6JZ2tO24nM5tX8f2hMRP3Q" },
+      { id: 803, title: "（11）产科抗磷脂综合征：从发病机制到治疗", url: "https://mp.weixin.qq.com/s/FQfvoKfCyTa9i_OieW8jrg" },
+      { id: 804, title: "（二、28、1）子宫内膜蜕膜化和妊娠并发症中的自噬基因和信号通路", url: "https://mp.weixin.qq.com/s/vJjL0jY1vMm1N7fAQNONpA" },
+      { id: 805, title: "（二、28、5）微塑料暴露对人类消化、生殖和呼吸健康的影响：快速系统综述", url: "https://mp.weixin.qq.com/s/D8WCAvK6pOZP2h76QQ5MaA" },
+      { id: 806, title: "（二、28、2）子宫内膜基质细胞蜕膜化过程中的代谢重编程和异质性", url: "https://mp.weixin.qq.com/s/g5VfnGsAkJiBYle83G9yBQ" },
+      { id: 807, title: "（二、28、3）表观遗传修饰在蜕膜化和子宫内膜容受性中的作用", url: "https://mp.weixin.qq.com/s/CqksYe16JYtt6oenYpa3Ow" },
+      { id: 808, title: "（二、28、4）人子宫内膜间质细胞蜕膜化的调节因子", url: "https://mp.weixin.qq.com/s/UlLjf4_wZ-OFmLlJ62NOKQ" },
+      { id: 809, title: "（9）血小板在血栓形成和动脉粥样硬化中：一把双刃剑", url: "https://mp.weixin.qq.com/s/BHYO9Vv8RpCShmUdlwo5YQ" },
+      { id: 810, title: "培训通知｜生殖健康咨询（遗传咨询方向）专项能力线上培训及考试通知", url: "https://mp.weixin.qq.com/s/g3i1pbf9nIg9KrbU9DgbuA" },
+      { id: 811, title: "（3）2024循证指南：卵巢早衰（ESHRE、ASRM、CRE-WHiRL 和 IMS共同制定 ）", url: "https://mp.weixin.qq.com/s/w8c6JboEkL-dbVUCEWLwvA" },
+      { id: 812, title: "（10）心血管病理学中炎症与血栓形成之间的相互作用", url: "https://mp.weixin.qq.com/s/rOncD1MDyQHNl_-dMUMsDQ" },
+      { id: 813, title: "（1）特纳综合征的演变", url: "https://mp.weixin.qq.com/s/6Wjr129uTEPLZAhCjwv-nQ" },
+      { id: 814, title: "（11、1）血小板和血小板-白细胞相互作用中的先天免疫受体", url: "https://mp.weixin.qq.com/s/K35E3IX2hucor7CfLUddHw" },
+      { id: 815, title: "（11、2）NOD样受体在先天免疫中的作用", url: "https://mp.weixin.qq.com/s/KCWuG-fccEdqdRq-SwoGCw" },
+      { id: 816, title: "20251月1日会元遗传尊敬的黄尚志老师新年祝福，继往开来。", url: "https://mp.weixin.qq.com/s/ZSwHilxLTito3DR_eo1glQ" },
+      { id: 817, title: "（12、1）抗磷脂综合征患者血栓形成、妊娠并发症或死亡风险", url: "https://mp.weixin.qq.com/s/Lbt75X0VEwb7zhqfCGUBcA" },
+      { id: 818, title: "（11、3）成纤维细胞在先天宿主防御中的基本免疫功能", url: "https://mp.weixin.qq.com/s/9deJTK8kt0sHEVQ9kl_fpA" },
+      { id: 819, title: "（2上）特纳综合征女孩和妇女管理的临床实践指南：2016辛辛那提国际特纳综合征会议论文集", url: "https://mp.weixin.qq.com/s/75B-VEUMTVwnY_-GL33ssQ" },
+      { id: 820, title: "（11、4）遗传性中性粒细胞疾病中自身免疫和自身炎症的悖论 – 寻找常见模式", url: "https://mp.weixin.qq.com/s/vwJ-Qjtoj_WPu3avR_SbnQ" },
+      { id: 821, title: "（12、2）补体活性和补体调节基因突变与 APS 和 CAPS 中的血栓形成相关", url: "https://mp.weixin.qq.com/s/8k2Bl_S36f8qUTA3Vb3Nsg" },
+      { id: 822, title: "（11、5）影响中性粒细胞功能的遗传性疾病的炎症后果", url: "https://mp.weixin.qq.com/s/y55J3kLf7QKZ10shtuYfCQ" },
+      { id: 823, title: "（13）风湿病学家视角下的产科抗磷脂综合征", url: "https://mp.weixin.qq.com/s/Q1BTNGOuny_FexEDaECwuQ" },
+      { id: 824, title: "（11、6）COVID-19 与其他病理状况和药物治疗如何激活我们的血管内先天免疫系统", url: "https://mp.weixin.qq.com/s/QSFXdArFznwyKTr1Qbo9CA" },
+      { id: 825, title: "（2下）特纳综合征女孩和妇女管理的临床实践指南：2016 年辛辛那提国际特纳综合征会议论文集", url: "https://mp.weixin.qq.com/s/1TYsYVBK0bqkUygaGQj8aQ" },
+      { id: 826, title: "（二、29、1）当自噬遇到胎盘发育和妊娠并发症时", url: "https://mp.weixin.qq.com/s/lGnLJeoaoC6TzSyd0e5FNQ" },
+      { id: 827, title: "（二、29、2）线粒体自噬涉及激素的生物过程", url: "https://mp.weixin.qq.com/s/8WSj57d8LJkhlvW7FMxPfQ" },
+      { id: 828, title: "（二、30、1）子宫内膜源性反复着床失败（RIF）有什么新发现", url: "https://mp.weixin.qq.com/s/TCzH8iVnTmjMEi7QKGkLKQ" },
+      { id: 829, title: "（二、30、2）周期性子宫内膜修复和再生：分子机制、疾病和治疗干预", url: "https://mp.weixin.qq.com/s/PUZUjBnNPa4Kkj97uwnYKQ" },
+      { id: 830, title: "（二、30、3）月经周期的子宫内膜：从生理学到未来的治疗", url: "https://mp.weixin.qq.com/s/nU5dtGaE47Vz2ciCQmaV2Q" },
+      { id: 831, title: "（二、30、4）子宫内膜干细胞/祖细胞——它们在子宫内膜修复和再生中的作用", url: "https://mp.weixin.qq.com/s/hLIBJzQHVnvjAbOzrLHIKw" },
+      { id: 832, title: "（二、30、6）异常子宫出血妇女和女孩的当代评估：FIGO 系统 1 和 2", url: "https://mp.weixin.qq.com/s/95XAAStf2F7fy1UcLIKjpA" },
+      { id: 833, title: "（二、30、7）从异常子宫出血和缺铁到胎儿发育不良：一条漫长曲折的道路", url: "https://mp.weixin.qq.com/s/jBQqtsldj3bYgjwtUI8s7w" },
+      { id: 834, title: "（二、31、1）反复种植失败女性的先天性和适应性免疫失调", url: "https://mp.weixin.qq.com/s/ZQXixRGIlLbas0fA5WLC7w" },
+      { id: 835, title: "（12、1）维生素 K：感染、炎症和自身免疫", url: "https://mp.weixin.qq.com/s/-3kbQiN12rjUneo3kFGk3w" },
+      { id: 836, title: "（12、2）用于免疫性血小板减少症诊断和监测的新型生物标志物", url: "https://mp.weixin.qq.com/s/P9eoTJUwUJxyLVF0mGwswA" },
+      { id: 837, title: "（13）深静脉血栓形成的消解：提出的免疫范式", url: "https://mp.weixin.qq.com/s/-FEyNaNVWiOhWzJeRXFOHA" },
+      { id: 838, title: "（14）抗磷脂综合征中免疫血栓形成和血管病变的机制", url: "https://mp.weixin.qq.com/s/H3GmoLaK7920mqdlE_dc9g" },
+      { id: 839, title: "（14、1）自身免疫性疾病中的炎性小体分子见解", url: "https://mp.weixin.qq.com/s/nURxmcppM4NpWBnUvhlkzQ" },
+      { id: 840, title: "（14、2）自身免疫和抗原特异性 T 细胞", url: "https://mp.weixin.qq.com/s/osNJ-X5mOfudQLU8i2gOVg" },
+      { id: 841, title: "（三、113、1）妊娠期母体调节性T细胞的起源和抗原特异性探讨", url: "https://mp.weixin.qq.com/s/tTX6641UcIZlBBUQvGeW8g" },
+      { id: 842, title: "（三、113、2）调节性 T 细胞在健康妊娠和生殖疾病中调节胎儿-母体免疫耐受中的作用", url: "https://mp.weixin.qq.com/s/jT3Bj90gslj_vivKOVmjaQ" },
+      { id: 843, title: "（三、117）妊娠期调节性 T 细胞：并非全部与FoxP3有关", url: "https://mp.weixin.qq.com/s/-QPLGrzWAJ1YDuwbIiXbpQ" },
+      { id: 844, title: "（三、132）胎儿 T 细胞耐受性和免疫调节的机制", url: "https://mp.weixin.qq.com/s/2bml0XQ_iKY_kKrGUXZ_dg" },
+      { id: 845, title: "（三、149）调节性T细胞在妊娠期高血压疾病中的作用及其治疗潜力综述", url: "https://mp.weixin.qq.com/s/lyv7PzXD9aSS51YiOQ_-Gw" },
+      { id: 846, title: "（26、1）2023 年 ACR/EULAR 抗磷脂综合征分类标准", url: "https://mp.weixin.qq.com/s/RtUtelWqmKhozHNScCPQOw" },
+      { id: 847, title: "（三、111）子宫内膜异位症和自身免疫", url: "https://mp.weixin.qq.com/s/i98VCwapy9h9Q_4CvrMrsw" },
+      { id: 848, title: "（三、118）妊娠免疫遗传学的新视角：母体主要组织相容性复合体 I 类分子教育子宫自然杀伤细胞", url: "https://mp.weixin.qq.com/s/zNE3FYtlNtKUasQAkpmmXw" },
+      { id: 849, title: "（26、2）2023 年 ACR/EULAR 抗磷脂综合征分类标准可识别并发症高风险患者", url: "https://mp.weixin.qq.com/s/NPNAvtDt_H7Cfg70dKRNNg" },
+      { id: 850, title: "（二、31、2）子宫内膜异位症和不孕症：子宫内膜炎、激素失调和免疫功能障碍之间的隐藏联系阻止了植入！", url: "https://mp.weixin.qq.com/s/fdKx4knO16EHoQDG_QpDdQ" },
+      { id: 851, title: "（二、31、6）辅助生殖技术中的黄体期支持", url: "https://mp.weixin.qq.com/s/Ti1YXHx78A341ySCDYYZCg" },
+      { id: 852, title: "（二、31、3）子宫内膜异位症和慢性子宫内膜炎的共同点和差异：针对异位子宫内膜的新型抗生素治疗策略的治疗潜力", url: "https://mp.weixin.qq.com/s/eRBm4zWvrzxr1H82iE8Xwg" },
+      { id: 853, title: "（二、31、4）慢性子宫内膜炎和子宫内膜异位症：同一枚硬币的两面？", url: "https://mp.weixin.qq.com/s/3RhS2ninpj-e1Ym9ZM6e5g" },
+      { id: 854, title: "（二、31、5）免疫微环境在女性生殖维持和调节中的作用：对免疫细胞串扰的新见解", url: "https://mp.weixin.qq.com/s/ZJGWpNznaAIOPmH42hgCAQ" },
+      { id: 855, title: "（二、31、7）周期性子宫内膜修复和再生", url: "https://mp.weixin.qq.com/s/s0Z4nQ9TMi-nBnsNUZIbkA" },
+      { id: 856, title: "（26、3）2023 年 ACR/EULAR APS 标准与修订后的札幌标准的评估和比较", url: "https://mp.weixin.qq.com/s/6WiOOuaZCSpVq4s92Jm5cQ" },
+      { id: 857, title: "（三、136）子宫内膜异位症诊断和管理的研究进展：综合综述", url: "https://mp.weixin.qq.com/s/MuQlZViTG7xzT2MeeBidPQ" },
+      { id: 858, title: "（28、2）复发性流产患者中抗磷脂抗体综合征的患病率：2023 年修订版 ACR/EULAR 抗磷脂综合征诊断标准的影响", url: "https://mp.weixin.qq.com/s/jD0mpNBCvGBWhmee9avYpw" },
+      { id: 859, title: "（三、178）妊娠滋养细胞疾病的诊断和早期管理进展", url: "https://mp.weixin.qq.com/s/LG7i40lKEXvSXkS7lydAOQ" },
+      { id: 860, title: "（三、198）子宫内膜异位症的激素治疗：内分泌背景", url: "https://mp.weixin.qq.com/s/ka91qC-vkbH5YcB_KmCXTw" },
+      { id: 861, title: "（三、204）月经失调和子宫内膜异位症的发展", url: "https://mp.weixin.qq.com/s/K-m-L0JIbiB9F4oUa1caTA" },
+      { id: 862, title: "（15、1）炎症和血栓形成之间的新联系", url: "https://mp.weixin.qq.com/s/mzGmZYYftxL4DyNQUv_UGQ" },
+      { id: 863, title: "（三、154）子宫腺肌病：是内分泌相关的子宫功能障碍吗？", url: "https://mp.weixin.qq.com/s/q5SHahUhnrBdJnM6smkizA" },
+      { id: 864, title: "（三、199）内分泌紊乱与生育和妊娠：最新进展", url: "https://mp.weixin.qq.com/s/2S0Zng0XpaOs_lm8MDRjjA" },
+      { id: 865, title: "（三、202）复发性自然流产的免疫学见解：分子机制和治疗干预", url: "https://mp.weixin.qq.com/s/SOMfuBORKVq984YnXa1Yuw" },
+      { id: 866, title: "（三、151）子宫腺肌病的机制和发病机制", url: "https://mp.weixin.qq.com/s/wPWaIjqTaeCKSuSMB5u4eA" },
+      { id: 867, title: "（三、173）子宫内膜异位症发病机制的主要理论", url: "https://mp.weixin.qq.com/s/_vzgNXyv8f7t3vinAdbobA" },
+      { id: 868, title: "（三、219）子宫内膜异位症临床诊断和治疗中的 10 宗“原罪”：贝叶斯方法", url: "https://mp.weixin.qq.com/s/nY-KLqsjTnP2q8vWFlpX7Q" },
+      { id: 869, title: "（三、138）子宫内膜异位症中的雌激素-免疫界面", url: "https://mp.weixin.qq.com/s/ink6YHPyFgzFL08HX25yAA" },
+      { id: 870, title: "（15、1）抗磷脂综合征（StatPearls [Internet]）", url: "https://mp.weixin.qq.com/s/P3hoM4dzLcRxsE1rBVQgSQ" },
+      { id: 871, title: "（三、205）全基因组基因表达和 DNA 甲基化谱的综合分析揭示了卵巢子宫内膜异位症中的候选基因", url: "https://mp.weixin.qq.com/s/LPGElY7AzIhcrGZ7bYP6uw" },
+      { id: 872, title: "（三、203）子宫内膜异位症的基因表达分析：免疫病理学见解、转录因子和治疗靶点", url: "https://mp.weixin.qq.com/s/RtpbUnVcsTnBTjQAbXOH8A" },
+      { id: 873, title: "（三、220）子宫内膜异位症的遗传学：综合综述", url: "https://mp.weixin.qq.com/s/PwQLfpfCg1ba37tSUi7EhA" },
+      { id: 874, title: "（三、144）内分泌干扰物化学物质暴露和女性生育能力下降：从病理生理学到表观遗传学风险", url: "https://mp.weixin.qq.com/s/Cl3bd_Zvpx7RVoQaQeUc8A" },
+      { id: 875, title: "（三、160）饮食中植物雌激素在子宫内膜异位症发病机制中内分泌干扰潜在机制的洞察", url: "https://mp.weixin.qq.com/s/PjNvGVVax8PINbY3iPvnsw" },
+      { id: 876, title: "（三、137）释放潜力：黄酮类如何影响子宫内膜异位症中的血管生成、氧化应激、炎症、增殖、侵袭和改变受体相互作用", url: "https://mp.weixin.qq.com/s/RBQYxPpnD78ChagnhH7l0w" },
+      { id: 877, title: "（三、152）子宫腺肌病的发病机制：来自新一代测序的见解", url: "https://mp.weixin.qq.com/s/fQJLz9y_NKhm4saxQS7TRw" },
+      { id: 878, title: "（三、153）人类子宫腺肌病的发病机制：目前的认识及其与不孕症的关系", url: "https://mp.weixin.qq.com/s/dCk1nNCQe08PQOphutbRYw" },
+      { id: 879, title: "（15、2）血栓炎症和血小板的作用", url: "https://mp.weixin.qq.com/s/LNGVgr0HfPQ_hK2-5rLbNQ" },
+      { id: 880, title: "（三、214）基于发病机制的子宫内膜异位症诊断与治疗", url: "https://mp.weixin.qq.com/s/HHKFlciywFgxyMZp-fAZnw" },
+      { id: 881, title: "（三、216）子宫内膜异位症中的遗传学与炎症：增进认知以开发新的药物策略", url: "https://mp.weixin.qq.com/s/L74zzdrTVy48MDIf1o-taw" },
+      { id: 882, title: "（三、217）肠道和生殖道微生物群：子宫内膜异位症发病机制的见解（综述）", url: "https://mp.weixin.qq.com/s/WmvKgmnAU3hUk9lnACIgQA" },
+      { id: 883, title: "（三、208）子宫内膜异位症与微生物组之间的双向关系", url: "https://mp.weixin.qq.com/s/ZtSTvjqS81Dti18pmtaq-w" },
+      { id: 884, title: "（三、226）肠道菌群和子宫内膜异位症：探索关系和治疗意义", url: "https://mp.weixin.qq.com/s/qTi4pkqSx8l_ICYXDvi8uQ" },
+      { id: 885, title: "（三、218）子宫内膜异位症和菌群失调：现状", url: "https://mp.weixin.qq.com/s/OYIEDyf0m1XQkhumVuu_Ig" },
+      { id: 886, title: "（二、39）复发性自然流产 （RSA） 患者免疫学评价综述", url: "https://mp.weixin.qq.com/s/lMTouZHaqojaQxO2apQicQ" },
+      { id: 887, title: "（三、183）母胎界面免疫耐受的多层机制", url: "https://mp.weixin.qq.com/s/P3Ttph8Kh9jKxPJgmAw89A" },
+      { id: 888, title: "（17、2）长新冠的临床谱：对女性生殖健康的影响", url: "https://mp.weixin.qq.com/s/qBFx9hVKEqqCjtweEB6tJA" },
+      { id: 889, title: "（15、2）抗磷脂抗体阳性：观察还是治疗？", url: "https://mp.weixin.qq.com/s/unkH6QL14vdrLL0l1YcWXQ" },
+      { id: 890, title: "（16）VWF、血小板和抗磷脂综合征", url: "https://mp.weixin.qq.com/s/OOrplEQkXcqf0tJl08nmoA" },
+      { id: 891, title: "（三、148）与胚胎耐受性相关的分子和前列腺素", url: "https://mp.weixin.qq.com/s/E1726XzPXKioMFfMdTigCw" },
+      { id: 892, title: "（三、147）新生儿垂直转移免疫力：母亲、机制和介质", url: "https://mp.weixin.qq.com/s/IqHFbNrSNkdyjvmD0koazQ" },
+      { id: 893, title: "（三、188）使用全外显子组测序发现与特发性复发性流产相关的致病性变异", url: "https://mp.weixin.qq.com/s/8J1rfPZnaiE6gpuPkhzCxg" },
+      { id: 894, title: "（三、272、1）子宫内膜异位症易感基因的表观遗传失调 （综述）", url: "https://mp.weixin.qq.com/s/g59CpgnPTP_fvre3GHou2Q" },
+      { id: 895, title: "（三、227、2）子宫内膜异位症的发病机制：遗传学/表观遗传学理论", url: "https://mp.weixin.qq.com/s/CcRlGNCNBMOBxsAaEFXzcw" },
+      { id: 896, title: "（三、35）子宫内膜异位症的表观遗传失调病理生理学和治疗的意义", url: "https://mp.weixin.qq.com/s/sJppaDNufFu406NkGGnBdA" },
+      { id: 897, title: "（三、161）非编码 RNA 在子宫内膜异位症免疫发病机制中的作用", url: "https://mp.weixin.qq.com/s/kXVdkLcHS_BcDKPrm4SXVw" },
+      { id: 898, title: "（三、212）子宫内膜异位症的内分泌学与临床实践相关吗？雌激素代谢的系统评价", url: "https://mp.weixin.qq.com/s/mOtdoiZLW5doLtl8KG5ygQ" },
+      { id: 899, title: "（三、222）子宫内膜异位症的发病机制：分子和细胞生物学见解", url: "https://mp.weixin.qq.com/s/sIPHrLec1P67COZdEgimmA" },
+      { id: 900, title: "（三、221）G 蛋白偶联雌激素受体免疫调节的研究进展", url: "https://mp.weixin.qq.com/s/JpNqsgdKS2EFYl-MgUG04w" },
+      { id: 901, title: "（39）中性粒细胞胞外陷阱在体内平衡和疾病", url: "https://mp.weixin.qq.com/s/L1H8fOwn_5mJcS8TOCC4HQ" },
+      { id: 902, title: "（三、179）复发性流产潜在生物标志物的探索：组学研究到分子机制文献综述", url: "https://mp.weixin.qq.com/s/6qx6jr--88tk7ikxLnXa0A" },
+      { id: 903, title: "（三、249）孟德尔随机化和遗传相关性分析对子宫内膜异位症及其共病关系的见解", url: "https://mp.weixin.qq.com/s/K9BU4qn_AQ0W91b5fEsLaw" },
+      { id: 904, title: "（16、1）炎症、感染和静脉血栓栓塞", url: "https://mp.weixin.qq.com/s/eraamM93HPurmMBOeedwow" },
+      { id: 905, title: "（三、143）细胞因子生物标志物在子宫内膜异位症中的诊断潜力：挑战和见解", url: "https://mp.weixin.qq.com/s/X4uoQZpwOmN2wEOjRgyUww" },
+      { id: 906, title: "（三、162）子宫内膜异位症中的 MicroRNA：炎症和孕激素抵抗的见解", url: "https://mp.weixin.qq.com/s/HXXenIoSIBqsqDHH2PsqRw" },
+      { id: 907, title: "（17）MicroRNA （miRNA）：抗磷脂综合征 （APS） 发病机制的新维度", url: "https://mp.weixin.qq.com/s/wwKqP-y2x5vbClVEKcj0EA" },
+      { id: 908, title: "（三、163）子宫内膜异位症中的表观遗传调控与 T 细胞反应——并非单纯的自身免疫现象", url: "https://mp.weixin.qq.com/s/EH6FG1HgA9Vf81d64g67Fw" },
+      { id: 909, title: "（三、241）超越 FOXP3 定义人类调节性 T 细胞：将表型与功能相结合的必要性", url: "https://mp.weixin.qq.com/s/J6EwZP6vXqf2MTkJsagCuA" },
+      { id: 910, title: "（三、251）超越免疫平衡：蜕膜调节性 T 细胞在不明原因复发性自然流产中的关键作用", url: "https://mp.weixin.qq.com/s/B1ylT-dQVBKCzvC9j0y8qA" },
+      { id: 911, title: "（三、164）调节性 T 细胞在子宫内膜异位症发展中的作用", url: "https://mp.weixin.qq.com/s/b05WjA1tGl5IOJVeU8ISdw" },
+      { id: 912, title: "（三、252）早期妊娠失败中系统性调节性 T 细胞功能不足的根源在于 FOXP3 转录特征的紊乱", url: "https://mp.weixin.qq.com/s/LL4zaUTYKZERP3ZbJJjJ6w" },
+      { id: 913, title: "（三、253）子宫Nodal表达支持母体免疫耐受，并在着床前时期建立 FOXP3+调节性 T 细胞群", url: "https://mp.weixin.qq.com/s/2AbtxnJArYvj8ZETpnhmvg" },
+      { id: 914, title: "（三、254）重新审视调节性 T 细胞作为先天免疫反应和炎症性疾病调节因子的作用", url: "https://mp.weixin.qq.com/s/eUPGrYCMfAv9J1ynls4zCg" },
+      { id: 915, title: "（二、36）NK细胞与生殖-汇综（1）：uNK细胞教育和妊娠适应之道及其在妊娠期间使命，复发性流产母胎相容性", url: "https://mp.weixin.qq.com/s/bfckrrTQWsXkV1BsLr7jWA" },
+      { id: 916, title: "（二、36）NK细胞与生殖-汇综（2）：子宫微环境及其NK细胞的生物学和病理学", url: "https://mp.weixin.qq.com/s/rWRkbfB1psb1PJkMATaAfw" },
+      { id: 917, title: "（二、36）NK细胞与生殖-汇综（3）：妊娠疾病中子宫NK细胞的细胞因子调节与免疫调节", url: "https://mp.weixin.qq.com/s/6qxM-5xFCJezGdclRZMZjQ" },
+      { id: 918, title: "（二、36）NK细胞与生殖-汇综（4）：杀手在妊娠期间会变成建设者，母体NK细胞在生殖与黏膜免疫交叉点（NK细胞与妊娠期感染）", url: "https://mp.weixin.qq.com/s/_U3mVwHcw5Kyed_zSkQX3w" },
+      { id: 919, title: "（二、36）NK细胞与生殖-汇综（5）：早期妊娠中滋养层细胞的局部免疫识别：争议与问题", url: "https://mp.weixin.qq.com/s/sqofJ0VSCeCzmyQq45kBKg" },
+      { id: 920, title: "（二、36）NK细胞与生殖-汇综（6）：内膜毒性NK细胞增加并非复发流产和种植失败病因、uNK变化及激素刺激负效应，治疗选择", url: "https://mp.weixin.qq.com/s/T9DmbatB-3q31l5bxb0OYQ" },
+      { id: 921, title: "（二、36）NK细胞与生殖-汇综（7）：子宫自然杀伤（uNK）细胞和固有淋巴细胞如何促进成功妊娠？", url: "https://mp.weixin.qq.com/s/pnA-8oHi446jDjSxxNUztw" },
+      { id: 922, title: "（二、36）NK细胞与生殖-汇综（8）：自然杀伤（NK）细胞在子痫前期（PE）中的核心作用", url: "https://mp.weixin.qq.com/s/xfsfCyjOfaln66JOHC_TRw" },
+      { id: 923, title: "（三、166）子宫内膜异位症的分类、病理生理学和治疗选择", url: "https://mp.weixin.qq.com/s/XF-5kcX3BmcAb0XfCAA92A" },
+      { id: 924, title: "（三、168）雌激素和孕酮介导基质细胞（EnSCs）和/或间充质干细胞/基质细胞（MSCs）表观遗传修饰在内异症发病机制中的作用", url: "https://mp.weixin.qq.com/s/zTOvXrJpz-aCMO4JVPTaoA" },
+      { id: 925, title: "（三、165）解释子宫内膜异位症易感性的最新见解——从遗传学到环境", url: "https://mp.weixin.qq.com/s/8jhgp4opXdF1cok2WOcrKw" },
+      { id: 926, title: "（三、167）子宫内膜异位症：病理生理学、（Epi） 表观遗传和环境参与的更新", url: "https://mp.weixin.qq.com/s/9ebJ6QWqqx7wigTBPP6MWg" },
+      { id: 927, title: "（三、229）表观遗传学、子宫内膜异位症和性类固醇受体：子宫内膜异位症患者雌激素和孕激素受体表观遗传调控机制的最新进展", url: "https://mp.weixin.qq.com/s/7v6enH0lTEDSV4rgf_2dLw" },
+      { id: 928, title: "（18）抗磷脂综合征的靶向血栓炎症治疗", url: "https://mp.weixin.qq.com/s/DpmBjC5maCdiG9nUCzydPA" },
+      { id: 929, title: "（三、239、1）蜕膜基质细胞：妊娠期间具有免疫调节功能的成纤维细胞", url: "https://mp.weixin.qq.com/s/M8fsksg9vEYoYS7J29oTsw" },
+      { id: 930, title: "（三、239、2）基质细胞蜕膜化与胚胎着床：成功妊娠的关键脆弱环节", url: "https://mp.weixin.qq.com/s/eLNWrXKH7bN9oah3Q2WTbA" },
+      { id: 931, title: "（三、248）子宫内膜异位症的遗传基础及其与其他疼痛和炎症性疾病的共病情况", url: "https://mp.weixin.qq.com/s/ZungCVoyTD-FSDq1nU1Sbg" },
+      { id: 932, title: "（三、245、2）抗甲状腺抗体及生殖障碍患者潜在的全身免疫异常", url: "https://mp.weixin.qq.com/s/ORcTfS824CepzuK0YZBDpg" },
+      { id: 933, title: "（301）免疫衰老 - 自身免疫性疾病的一种机制", url: "https://mp.weixin.qq.com/s/Bp0TBfM_4Am1i32-boZ1Dg" },
+      { id: 934, title: "（三、215）牛磺酸在男性生殖中的作用：生理学、病理学和毒理学", url: "https://mp.weixin.qq.com/s/iKwkAoqzDOxpzxfIA5xVSQ" },
+      { id: 935, title: "（三、245、1）妊娠期自身免疫性甲状腺疾病中的先天免疫", url: "https://mp.weixin.qq.com/s/WHToFTR3gNT7TTIbcyXPww" },
+      { id: 936, title: "（181、1）端粒和端粒酶：三十年进展", url: "https://mp.weixin.qq.com/s/0Frax_K6qKm87cPYBonDdw" },
+      { id: 937, title: "（182、3）端粒：历史、健康与衰老的标志", url: "https://mp.weixin.qq.com/s/8VF-KuyQ2JyVkJP2yedWgw" },
+      { id: 938, title: "（182、1）衰老和年龄相关疾病中的端粒功能障碍", url: "https://mp.weixin.qq.com/s/a0UPzaWkWba-bsgk6PrMVw" },
+      { id: 939, title: "（182、2）端粒：功能障碍、维持、衰老与癌症", url: "https://mp.weixin.qq.com/s/Q-AYyi1nhqLs6Urk5gnfOA" },
+      { id: 940, title: "（179、2）端粒生物学障碍（疾病）", url: "https://mp.weixin.qq.com/s/QQSFvFbcmIKbu7vRuOZp6Q" },
+      { id: 941, title: "（181、2）端粒与人类疾病", url: "https://mp.weixin.qq.com/s/SA3sGxQMUIw6YiXqw7C4fg" },
+      { id: 942, title: "（179、1）人类端粒生物学障碍（疾病）的遗传学", url: "https://mp.weixin.qq.com/s/stWcggtNsj6PZyyeapHSug" },
+      { id: 943, title: "（18、1）健康的标志", url: "https://mp.weixin.qq.com/s/2IS1T7ZEimERTB76CT_3Iw" },
+      { id: 944, title: "（18、2）衰老的标志：一个膨胀的宇宙", url: "https://mp.weixin.qq.com/s/s4_BX8sRysWB7ojgEpr7Nw" },
+      { id: 945, title: "（18、4）缺少的健康标志：心理社会适应", url: "https://mp.weixin.qq.com/s/4NTrcwPI7aGem6Z3CKoiag" },
+      { id: 946, title: "（304）从衰老科学到精准老年医学：理解与应对衰老", url: "https://mp.weixin.qq.com/s/3QbbbxuKkGqxtyL8OlWbJg" },
+      { id: 947, title: "（18、3）衰老的标志：成因与后果", url: "https://mp.weixin.qq.com/s/gMldxeD7JFdmNW22fWJxow" },
+      { id: 948, title: "（306）衰老基因组学与抗衰老：精准老年医学的基石", url: "https://mp.weixin.qq.com/s/0KxlyHWbDKyAEY7vWo0pYA" },
+      { id: 949, title: "（345）衰老的卵巢和学到的故事从胎儿发育开始", url: "https://mp.weixin.qq.com/s/8R6UHBPtfeGsv--E5zGHYw" },
+      { id: 950, title: "（342）卵巢衰老的标志", url: "https://mp.weixin.qq.com/s/VHTAWJt_1cLZzkeJe56ERQ" },
+      { id: 951, title: "（347）DNA 甲基化作为女性生殖衰老的窗口", url: "https://mp.weixin.qq.com/s/bMeUouTqZUEIZbDv3LaZAw" },
+      { id: 952, title: "（350）生殖衰老：卵巢衰老中的炎症、免疫细胞与细胞衰老", url: "https://mp.weixin.qq.com/s/Aq3onD1Oigi73zMH4_DA8Q" },
+      { id: 953, title: "（349）揭示慢性炎症在卵巢衰老中的作用：机制及临床意义的见解", url: "https://mp.weixin.qq.com/s/HhTh1D075V46l1iefOMlpA" },
+      { id: 954, title: "（343）基因组学为生殖衰老和更年期带来的新见解", url: "https://mp.weixin.qq.com/s/VMLZCEP3dM6rfOriN-5Txw" },
+      { id: 955, title: "（341）线粒体：卵巢衰老和长寿的表观遗传调节因子", url: "https://mp.weixin.qq.com/s/Xv8ZbkzsK0tmWm7DHeFHvg" },
+      { id: 956, title: "（351）针对线粒体的卵巢衰老研究：新机制与治疗潜力的见解", url: "https://mp.weixin.qq.com/s/1yrQdMNBweq0jyL5r1eMng" },
+      { id: 957, title: "（348）从分子角度探讨 NAD+ 在卵巢衰老中的作用及角色", url: "https://mp.weixin.qq.com/s/Y6G0F8hyNplyGQZVmgTIag" },
+      { id: 958, title: "（346）生活方式和饮食因素在卵巢早衰发展中的作用", url: "https://mp.weixin.qq.com/s/N3fLZXpjHwujbuCKtQMEWA" },
+      { id: 959, title: "（142、1）T 细胞衰老的标志", url: "https://mp.weixin.qq.com/s/5SBgls71RMLJvWljkoGmEw" },
+      { id: 960, title: "（330）衰老与免疫衰老的最新进展：机制与治疗策略", url: "https://mp.weixin.qq.com/s/5mPiteNkyFwcmV8VU6hMIQ" },
+      { id: 961, title: "（三、246）自身免疫性甲状腺疾病与妊娠：遗传学、表观遗传学和环境因素之间的相互作用", url: "https://mp.weixin.qq.com/s/jxMzdp7Q-RWwSQIIt7CYiQ" },
+      { id: 962, title: "（三、247）85,421 例中国孕妇甲状腺相关激素、功能障碍和自身免疫的全基因组关联研究", url: "https://mp.weixin.qq.com/s/Jazi4NRw7VBaH2CzNFi-Hg" },
+      { id: 963, title: "（20）cGAS-STING 通路是免疫衰老和炎症的潜在触发因素", url: "https://mp.weixin.qq.com/s/BYjUuzRSaPW_muztz2wGoA" },
+      { id: 964, title: "（三、145、3）内分泌干扰物（EDCs）与妊娠丢失", url: "https://mp.weixin.qq.com/s/EmlSas2YMXPxWYy1qB-omQ" },
+      { id: 965, title: "（三、238）转化生长因子β（TGFβ）信号通路在子宫功能与疾病中的整体作用", url: "https://mp.weixin.qq.com/s/QIHWcEotVZPJVYpYwoEh-Q" },
+      { id: 966, title: "（三、145、2）多环芳烃（PAH）蓄积对复发性流产女性生殖激素、氧化应激指标及苯并芘二醇环氧化物（BPDE）白蛋白加合物影响", url: "https://mp.weixin.qq.com/s/yI2kNVv6AczZidK1AdrG1w" },
+      { id: 967, title: "（三、145、1）环境接触全氟和多氟烷基物质（PFASs）与普通人群生殖结局：流行病学研究的系统综述", url: "https://mp.weixin.qq.com/s/R-05lHXeV9JM9tu3F1Xy-w" },
+      { id: 968, title: "（三、116、3）生殖激素对 T 细胞免疫的影响，正常和辅助生殖周期", url: "https://mp.weixin.qq.com/s/3BemUBow_lMJvemFI3q2Sg" },
+      { id: 969, title: "（三、145、4）全氟和多氟烷基物质（PFASs）及其对女性生殖疾病的潜在影响", url: "https://mp.weixin.qq.com/s/Q3IswyR6GCmylPFiqtXG2g" },
+      { id: 970, title: "（374）衰老相关的卵巢衰竭和不孕-褪黑素拯救", url: "https://mp.weixin.qq.com/s/psnQMny6DqhXiL4QgJeMzw" },
+      { id: 971, title: "（三、192）TGF-β 对 T 细胞的调节", url: "https://mp.weixin.qq.com/s/uIQSKKA9baoyu_lzLkPsnA" },
+      { id: 972, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（1）非整倍体：致癌物和生殖毒物常见的早期证据生物标志物", url: "https://mp.weixin.qq.com/s/YbkybgXSgoLe42MpjRtg2g" },
+      { id: 973, title: "（三、145、5）全氟和多氟烷基物质（PFAS）影响女性生殖健康：流行病学证据及潜在机制", url: "https://mp.weixin.qq.com/s/66btwD36W-PXBX_rdbQ9Bg" },
+      { id: 974, title: "（三、87）子宫内膜异位症与盆腔炎双向关系的发病机制相似性", url: "https://mp.weixin.qq.com/s/ow_r5sUnGLeM7HUEW9W8jw" },
+      { id: 975, title: "王若光：不孕不育患者家庭遗传咨询要点，北京生殖健康专项技能暨（北大一院110周年活动）医学遗传咨询从业人员培训班", url: "https://mp.weixin.qq.com/s/OUFRMJBHOkgj6FIfDEHz7A" },
+      { id: 976, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（2）孕前持久EDCs与RPL及气候、空气污染对妊娠结局影响", url: "https://mp.weixin.qq.com/s/qQDqahsTi0Sc1VzFcQuNIA" },
+      { id: 977, title: "王若光：孕期非遗传因素的遗传咨询，2025出生缺陷与遗传咨询学习班暨复旦大学遗传咨询攀登论坛第五期", url: "https://mp.weixin.qq.com/s/e6LUPlLGBpmH9aLV89-JSQ" },
+      { id: 978, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（3）DEHP暴露影响生殖子宫效应及联苯菊酯在RIF和RPL作用", url: "https://mp.weixin.qq.com/s/TESHze8TzHNHKr-DgGiR7w" },
+      { id: 979, title: "王若光：妊娠失败、非整倍体与内异症和衰老机制相关，生殖健康临床遗传咨询专项能力提升培训（沈阳班20250607-8）", url: "https://mp.weixin.qq.com/s/SyL9LeXa60wZYWbUdX4v_Q" },
+      { id: 980, title: "（三、126、1）邻苯二甲酸酯/盐暴露与子宫内膜异位症风险之间的关联：更新述评", url: "https://mp.weixin.qq.com/s/tHVSUS2CRh-vFymRcOiOlQ" },
+      { id: 981, title: "多囊卵巢综合征（Nature reviews disease primers）", url: "https://mp.weixin.qq.com/s/DmLP58t7hBkoU5K0IfTBLw" },
+      { id: 982, title: "（353、1）子宫内膜衰老机制：来自自然受孕和辅助生殖技术周期的经验教训", url: "https://mp.weixin.qq.com/s/cP6yaMcHGewF74cL5zkG_g" },
+      { id: 983, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（4-上）微塑料接触主要种类与人类健康关系荟萃", url: "https://mp.weixin.qq.com/s/2jQ9Q8tGeGPIynzbVokzXQ" },
+      { id: 984, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（4-下）微塑料与人类健康", url: "https://mp.weixin.qq.com/s/dBsYgGtbrUlmIuaPxNoWPQ" },
+      { id: 985, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（5-上）室内挥发有机化合物：采样、测定、来源、健康风险及监管", url: "https://mp.weixin.qq.com/s/k3sxcUYHqYdssaLiAbrhhg" },
+      { id: 986, title: "（二、32）PPARβ/δ 激活刺激人子宫内膜基质（ESC）细胞分化：不孕症的新靶点？", url: "https://mp.weixin.qq.com/s/s7jyxU9fy8GAwmSzOiOFfw" },
+      { id: 987, title: "（二、33）焦亡在妊娠相关疾病发生发展中的作用", url: "https://mp.weixin.qq.com/s/21Ewmjra-vmZZ-uCz9DnQQ" },
+      { id: 988, title: "（二、34）母体对胎儿的同种异体识别", url: "https://mp.weixin.qq.com/s/CFqSUY5D8byMVvMGEg027A" },
+      { id: 989, title: "（二、35、1）母胎界面免疫：KIR/HLA (Allo异体)识别", url: "https://mp.weixin.qq.com/s/Oj6qaoNciJLJuhlYehGwFw" },
+      { id: 990, title: "（二、35、2）母胎界面的免疫学", url: "https://mp.weixin.qq.com/s/Pj1Jb9daLxsL7ZYZg3zH9Q" },
+      { id: 991, title: "（378）自身免疫方案饮食：自身免疫性疾病患者的个性化排除饮食", url: "https://mp.weixin.qq.com/s/aBLlShf3bKRb5Dzb1de6Aw" },
+      { id: 992, title: "（二、37）蜕膜亚群在着床、月经和流产中的作用", url: "https://mp.weixin.qq.com/s/4jQQE5j_Re8rBBSh4E56NQ" },
+      { id: 993, title: "意识是什么？", url: "https://mp.weixin.qq.com/s/0Me_eyWwNdR09p9c-MI0cw" },
+      { id: 994, title: "（三、94、1）子宫腺肌病相关的免疫学变化：一项系统综述", url: "https://mp.weixin.qq.com/s/CH67yJ2YVD9muMRU3q_QsA" },
+      { id: 995, title: "（二、38、1）妊娠早期人类胚胎的母体选择：来自复发性流产的见解", url: "https://mp.weixin.qq.com/s/9yqKAWqRcgdCKvk4_QNQsw" },
+      { id: 996, title: "（26、1）焦亡与坏死性凋亡：相似性、差异性及相互作用", url: "https://mp.weixin.qq.com/s/dmfPUjZJ8GWRlaNcZh8c8w" },
+      { id: 997, title: "（三、175、2）早产炎症：与先天免疫和获得性免疫相关的早产新机制", url: "https://mp.weixin.qq.com/s/Oc66Uplvu0l6qpaVVX7nKg" },
+      { id: 998, title: "（三、175、34）早产治疗的现状与未来之路", url: "https://mp.weixin.qq.com/s/wnJoA89eW3xupZSzggbk6A" },
+      { id: 999, title: "（二、38、2）基质细胞衰老导致子宫内膜蜕膜化受损和与滋养层细胞相互作用缺陷", url: "https://mp.weixin.qq.com/s/yK2NaOSsgdfkFX6GXV7CAQ" },
+      { id: 1000, title: "（二、40、1）母胎界面的内吞作用：营养物质运输与病原体防御的平衡", url: "https://mp.weixin.qq.com/s/xmxq9vWdegB7H9jVU15khg" },
+      { id: 1001, title: "（二、40、2）母胎界面胞葬（吞噬）作用的免疫调节效应", url: "https://mp.weixin.qq.com/s/3qjKqLZfuW0uWiEZVKxQjQ" },
+      { id: 1002, title: "（二、40、3）胎盘滋养层细胞与母胎界面巨噬细胞之间的相互作用：现状与未来展望", url: "https://mp.weixin.qq.com/s/weQFpZ4rNf2va-ZNtAMiWg" },
+      { id: 1003, title: "（三、175、170）胎盘综合征——围产医学的新范式", url: "https://mp.weixin.qq.com/s/ag3EtjC52ixajBqPd6POZg" },
+      { id: 1004, title: "（三、33、2）子宫内膜异位症：分子病理生理学及近期治疗策略——全面文献综述", url: "https://mp.weixin.qq.com/s/lfGDrRzqTMa8lYVqIHFp6w" },
+      { id: 1005, title: "（三、94、4）子宫腺肌病相关不孕症：免疫学视角的最新进展", url: "https://mp.weixin.qq.com/s/bPXyidAmK_N-3BsfRm7irQ" },
+      { id: 1006, title: "（三、94、7）子宫腺肌病：被忽视的疾病", url: "https://mp.weixin.qq.com/s/HTQOWjEiYC565p2LUQQSbA" },
+      { id: 1007, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（5-中）塑料气味：微塑料和纳米塑料对健康和环境隐性威胁综述", url: "https://mp.weixin.qq.com/s/dyYe7M7SH3mZJHeZPK3D0g" },
+      { id: 1008, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（5-下）淡水系统中多环芳烃（PAHs）：来源、分布及生态毒理", url: "https://mp.weixin.qq.com/s/lZqJPucdK7VI5sCTXAf3Sg" },
+      { id: 1009, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（6-上）评估食品中的重金属污染：对人类健康和环境安全的影响", url: "https://mp.weixin.qq.com/s/uPYViMbBtQQ7UnvHK8tZvQ" },
+      { id: 1010, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（6-中上）环境砷暴露对男性和女性生殖系统毒性及缓解策略及汞差异", url: "https://mp.weixin.qq.com/s/6n72N8N-UyH6brdi8MCrmg" },
+      { id: 1011, title: "（三、145、6）汇综：环境毒物相关生殖与子代影响（6-中下）金属混合、砷暴露与FGR及环境影响儿童健康公共供水砷量相关出生结局", url: "https://mp.weixin.qq.com/s/k0PEf7DJZwn0BrzaLe7yCQ" },
+      { id: 1012, title: "（48、5）细胞焦亡触发的发病机制：抗磷脂综合征的新见解", url: "https://mp.weixin.qq.com/s/R_FG_F93nYkCNZhlYC_VKw" },
+      { id: 1013, title: "（53）妊娠期抗磷脂综合征：综合文献综述", url: "https://mp.weixin.qq.com/s/a63hOzX-1hiKLRY6xiKgmQ" },
+      { id: 1014, title: "（54）B 细胞耐受与产科抗磷脂综合征", url: "https://mp.weixin.qq.com/s/xk6FALqpq2wWyG6F0Q-DHg" },
+      { id: 1015, title: "（三、90、1）B 细胞对胎盘和胎儿的反应", url: "https://mp.weixin.qq.com/s/GFPkuYDof3ulBB035sMLbQ" },
+      { id: 1016, title: "（三、244）B 细胞：在妊娠生理学和病理学中的作用", url: "https://mp.weixin.qq.com/s/YykTF2J0E2hj4HvnCWK74A" },
+      { id: 1017, title: "（三、145、6）汇综：环境毒物及内分泌干扰物相关生殖与子代影响（6-下）解决畜禽养殖中抗生素使用困境的方案：监管政策与替代品", url: "https://mp.weixin.qq.com/s/w503hfdyDldrJGc2gI6fdQ" },
+      { id: 1018, title: "（142、6）免疫衰老：分子机制和疾病", url: "https://mp.weixin.qq.com/s/p5kCZ17aV41k8QExpdFSVg" },
+      { id: 1019, title: "（三、145、7）-（2）持久性有机污染物对生育能力的影响：暴露于环境毒物二恶英（TCDD）会改变生殖道免疫反应", url: "https://mp.weixin.qq.com/s/8SMzYNWlZ7Y0uGIHBf7vnQ" },
+      { id: 1020, title: "（三、145、7）-（3）环境内分泌干扰物与子宫内膜异位症", url: "https://mp.weixin.qq.com/s/iREO-aO75WSy_5fV__NuYA" },
+      { id: 1021, title: "（三、90、2）狼疮和复发性流产：女性性激素和 B 细胞的作用", url: "https://mp.weixin.qq.com/s/7UdaAtg9Qc_6Epdw_av5MA" },
+      { id: 1022, title: "（三、175、8）B 细胞在子痫前期病理生理学中的作用：围产期细胞疗法的一个潜在靶点？", url: "https://mp.weixin.qq.com/s/rJwQGEHnFzAhVCFQW2A2Tg" },
+      { id: 1023, title: "（三、145、7）-（5）全氟烷基物质（PFAS）作为甲状腺干扰物：有证据表明其存在多代影响吗？", url: "https://mp.weixin.qq.com/s/KqxZRNfEkoeWGvEfBPrK8A" },
+      { id: 1024, title: "（三、145、7）-（4）环境毒物对哺乳动物生殖的多代和跨代影响", url: "https://mp.weixin.qq.com/s/xqt5U7FbouS3PZw6I7TnIQ" },
+      { id: 1025, title: "（三、145、7）-（1-上）环境雌激素及内分泌干扰物：一个沉重的话题-发育毒物跨代腺肌症发病、男婴生殖器畸形、青春期不良影响", url: "https://mp.weixin.qq.com/s/9HxI62bcS09RL7Tc2_P2IQ" },
+      { id: 1026, title: "（三、145、7）-（6）微塑料对女性生殖和早期生命的影响", url: "https://mp.weixin.qq.com/s/mV73Qnr3uZDtKOMxi4M9gw" },
+      { id: 1027, title: "（三、145、7）-（7）内分泌干扰物（EDCs）对子宫表观遗传调控的影响：综述性文章", url: "https://mp.weixin.qq.com/s/tItLtrKacYaUvYC__wvE9Q" },
+      { id: 1028, title: "（三、145、7）-（8）内分泌干扰化学物质与女性、男性及动物模型的生殖障碍", url: "https://mp.weixin.qq.com/s/IIogfjA-ANlLsEPy-ZNVsw" },
+      { id: 1029, title: "（三、145、7）-（9）芳香烃受体在母胎界面营养代谢和免疫调节中的作用", url: "https://mp.weixin.qq.com/s/-J1lLCQ0URH9ryGLBNr5Pw" },
+      { id: 1030, title: "（17）线粒体调控炎症", url: "https://mp.weixin.qq.com/s/OgCW5xdgmSIuQGixgjErPA" },
+      { id: 1031, title: "（337-1）从衰老到长新冠：探究免疫衰老、炎症衰老与自身免疫的融合", url: "https://mp.weixin.qq.com/s/a-D4yUfmDBcp-6eV0qjUcw" },
+      { id: 1032, title: "（三、145、7）-（10）内分泌干扰化合物——导致免疫耐受受损从而引发妊娠期炎症性疾病的原因？", url: "https://mp.weixin.qq.com/s/k7sv7Muu6m_Gz_GS7G5FfQ" },
+      { id: 1033, title: "（38、3）褪黑素在生殖医学中：一个有前景的治疗靶点？", url: "https://mp.weixin.qq.com/s/HVlHRBRysPaQPaoJ0d0WRA" },
+      { id: 1034, title: "（4）子宫内膜衰老与生殖能力下降：线粒体功能障碍的核心作用", url: "https://mp.weixin.qq.com/s/lYbFMtmKTujnRIYcDtGL9Q" },
+      { id: 1035, title: "（38、1）褪黑素在多种病理生理环境中调节内质网应激：全面的机制综述", url: "https://mp.weixin.qq.com/s/xMgCe1CZwDUynltctJCdGA" },
+      { id: 1036, title: "（105）子宫衰老与生殖：应对一个生物学难题", url: "https://mp.weixin.qq.com/s/hS3tBhe6JTKgcB2HflhqLQ" },
+      { id: 1037, title: "（三、145、7）-（11）现实环境暴露对生殖的影响：内分泌干扰物、生殖衰老与更年期", url: "https://mp.weixin.qq.com/s/SbGp9hyhONFVYZpIE9PviA" },
+      { id: 1038, title: "（三、145、7）-（12）环境污染物暴露对生殖衰老及更年期过渡的影响", url: "https://mp.weixin.qq.com/s/kHYfNUuJt4R_n-Ex06wOkw" },
+      { id: 1039, title: "（三、145、7）-（13）雌激素内分泌干扰物（DES）暴露影响生殖发育、勃起功能、跨代影响", url: "https://mp.weixin.qq.com/s/tZiywcyCbPTp1P0TJrphNw" },
+      { id: 1040, title: "（三、145、7）-（14）青年男性精液质量的地区差异：关于胎儿期及成年期环境和生活方式因素影响的综述", url: "https://mp.weixin.qq.com/s/dbK60KODbApwpEgaeOSaXQ" },
+      { id: 1041, title: "（三、145、7）-（15）TGFβ信号通路与内分泌干扰物（EDCs）通过重编程子宫肌层干细胞与子宫肌瘤发病风险相关联", url: "https://mp.weixin.qq.com/s/EG1viSCO9fL4LdnP2Jj5KQ" },
+      { id: 1042, title: "（240、10）线粒体疾病：从分子机制到治疗进展（上）", url: "https://mp.weixin.qq.com/s/9hWufUppdfMoisEq7SSm_A" },
+      { id: 1043, title: "（240、10）线粒体疾病：从分子机制到治疗进展（下）", url: "https://mp.weixin.qq.com/s/BP3oiQ3rKRKprtJFd2MP6Q" },
+      { id: 1044, title: "（5、2）线粒体：卵母细胞拯救的新兴治疗策略", url: "https://mp.weixin.qq.com/s/HrxHQZWrs0W9kB3fK2r_Tw" },
+      { id: 1045, title: "（三、181）HLA-G 调控功能对妊娠早期免疫细胞的分子机制", url: "https://mp.weixin.qq.com/s/PbaA-gazhjM1E8Nfo_hr3g" },
+      { id: 1046, title: "（三、185）HLA-G： 母胎免疫耐受的重要介质", url: "https://mp.weixin.qq.com/s/pl9drTowg6rEGNk1Laf4ow" },
+      { id: 1047, title: "（142）先天性心脏病：对表观遗传机制的最新见解", url: "https://mp.weixin.qq.com/s/N-D6jxDhvlt_8oM6RqboAA" },
+      { id: 1048, title: "（三、145、7）-（30）农药暴露的进化后果包括跨代可塑性和潜在的终端投资跨代效应", url: "https://mp.weixin.qq.com/s/qIcp3symT71CaH4piHylpg" },
+      { id: 1049, title: "（三、145、7）-（31）农药暴露对全身性炎症生物标志物的影响，孕产妇农药暴露和出生缺陷风险", url: "https://mp.weixin.qq.com/s/WHK9YElBsWHtI3u4jACKhw" },
+      { id: 1050, title: "（三、145、7）-（1-中）环境雌激素及内分泌干扰物：一个沉重的话题-产前己烯雌酚卵泡发生多代影响，内分泌干扰物与肥胖", url: "https://mp.weixin.qq.com/s/Q1XQY8YuVOTLDdfw0MIj5Q" },
+      { id: 1051, title: "（三、145、7）-（1-下）环境雌激素及内分泌干扰物：一个沉重的话题-己烯雌酚癌症风险，子宫畸形，子代影响，滑石粉与肌瘤发病", url: "https://mp.weixin.qq.com/s/9IDCI-NGMwk2mSW-yetbLg" },
+      { id: 1052, title: "（38、2）褪黑素与去乙酰化酶（sirtuin）的相互作用的治疗学方面：基于细胞机制的现有数据最新综述", url: "https://mp.weixin.qq.com/s/bYBK0Lk71eg9saeE5c3G5g" },
+      { id: 1053, title: "（38、4）（上）褪黑素：调节卵巢功能的潜在靶点，外源褪黑素通过调节颗粒细胞自噬来缓解卵巢早衰", url: "https://mp.weixin.qq.com/s/H3_kbrSKUrO3HL-RtwtOPg" },
+      { id: 1054, title: "（38、4）（中）褪黑素通过 p38 、PI3K-Akt 通路改善铅损、PCOS卵巢功能，激活 Foxo3a 调节POI自噬", url: "https://mp.weixin.qq.com/s/_UJ7fSdMB2moIdXcYhsNmw" },
+      { id: 1055, title: "（38、4）（下）褪黑素：对抗卵巢储备减少，延缓卵巢衰老作用靶点", url: "https://mp.weixin.qq.com/s/h4oQfD_jbanJGgzlrvioOA" },
+      { id: 1056, title: "（78）表观遗传学与女性生殖衰老", url: "https://mp.weixin.qq.com/s/dxQ05yd5_06wFHuL-B7iDw" },
+      { id: 1057, title: "（204、3上）15 年生存优势：免疫韧性作为健康老龄化的良性力量", url: "https://mp.weixin.qq.com/s/37AKtFltJl9Q1M3fmL-VrA" },
+      { id: 1058, title: "（204、3下）免疫韧性：改写健康老龄化的规则", url: "https://mp.weixin.qq.com/s/KX-4FI7uZlVMhUzEWnIG7Q" },
+      { id: 1059, title: "（三、4、1）子宫内膜细胞因子在有或无子宫内膜异位症患者中对不孕症的评估", url: "https://mp.weixin.qq.com/s/Ps-scEYEDWUx51ccJ8cv6Q" },
+      { id: 1060, title: "（三、210、1）子宫内膜异位症对卵巢衰老的影响：从基础科学到临床管理", url: "https://mp.weixin.qq.com/s/ra8WLj_BwO7c4zcqNVSTBg" },
+      { id: 1061, title: "（三、4、2）子宫内膜蜕膜化障碍中激素失衡介导的免疫炎症", url: "https://mp.weixin.qq.com/s/ULLEwtTh2ghGeJBKjoZ92w" },
+      { id: 1062, title: "（三、4、3）子宫内膜异位症中蜕膜功能障碍及不孕的机制：前列腺素和 SASP 的作用", url: "https://mp.weixin.qq.com/s/u3q4VO3NGwiul4nRdTc77Q" },
+      { id: 1063, title: "（三、4、4）饮食抗氧化剂与不孕、子宫内膜异位症、男性勃起功能等影响研究进展，基于 NHANES证据", url: "https://mp.weixin.qq.com/s/UMCYF1obO8V8dXX99R-J_w" },
+      { id: 1064, title: "（35）表观遗传时钟为子宫衰老之谜提供线索", url: "https://mp.weixin.qq.com/s/amJbrUA9OQ4z6pb4KQ6IpQ" },
+      { id: 1065, title: "（114）揭开子宫衰老之谜：还有更多待探索", url: "https://mp.weixin.qq.com/s/ElfX52IhQjONIXLy_REGww" },
+      { id: 1066, title: "（三、94、2）子宫内膜异位症：免疫学家的视角（观点）", url: "https://mp.weixin.qq.com/s/57dM_fj9Sj3qcLvaCH20Nw" },
+      { id: 1067, title: "（76）不孕女性的交界区（JZ）：一项三维超声研究", url: "https://mp.weixin.qq.com/s/w9C-rfAyD-LetWFEvIpOhg" },
+      { id: 1068, title: "（23）交界区增厚：子宫内膜肌层单位紊乱", url: "https://mp.weixin.qq.com/s/Sh2LTQ4uZfT_vo1UYm8FAw" },
+      { id: 1069, title: "（36）子宫肌层与宫颈比值：在地区医疗环境中，一项简单的超声测量能否提高子宫腺肌病的诊断水平？", url: "https://mp.weixin.qq.com/s/M1mqIANr07IYg_HGL4TXSA" },
+      { id: 1070, title: "（32）子宫结合带与子宫腺肌病：磁共振成像、经阴道超声与组织学的比较", url: "https://mp.weixin.qq.com/s/6mtD95XV38s7WQ-Qun0E5g" },
+      { id: 1071, title: "（15）子宫腺肌症影像诊断：肌层与子宫肿块，子宫形态超声评估（MUSA）", url: "https://mp.weixin.qq.com/s/NNmv8n7wWfvXClwhuqckmQ" },
+      { id: 1072, title: "（75）子宫腺肌病诊断不确定性与症状严重程度的超声特征", url: "https://mp.weixin.qq.com/s/_HtVSM4Gdjvng-sN_qfDFA" },
+      { id: 1073, title: "（27）子宫腺肌病的分类及其影像学和组织病理学表型与临床结局相关性及子宫腺肌病的诊断分类（MRI和超声）图文", url: "https://mp.weixin.qq.com/s/7bBXbqGQonzi6LntKEBl7A" },
+      { id: 1074, title: "（14）子宫腺肌病：是一种疾病，或子宫衰老过程导致的症状，还是两者兼而有之？", url: "https://mp.weixin.qq.com/s/IvPNxGnRvQnHSa1OtrIGWA" },
+      { id: 1075, title: "（95）典型及非典型子宫腺肌病的影像学表现谱系", url: "https://mp.weixin.qq.com/s/NBRFECOe7wjWxsnRLwHucA" },
+      { id: 1076, title: "（96）子宫腺肌病概览：经阴道超声与磁共振成像表现的综合评述", url: "https://mp.weixin.qq.com/s/KM1UulQ6712sPqm2FkBz0g" },
+      { id: 1077, title: "（12）巧克力囊肿（子宫内膜异位囊肿）超声检查：评估、复发，表现与诊断准确性", url: "https://mp.weixin.qq.com/s/qdjkT6Da2RUmoqHvv9ARPA" },
+      { id: 1078, title: "（18）超声在子宫内膜异位囊肿与出血性卵巢囊肿鉴别诊断中的作用：纹理分析的角色", url: "https://mp.weixin.qq.com/s/cnqDNN1tHdm8Bgg5WjBnnw" },
+      { id: 1079, title: "（19）子宫腺肌病诊断与分类的最新进展与子宫内膜异位症的MRI成像与 #Enzian 分类的相关性：适用性及结构化报告", url: "https://mp.weixin.qq.com/s/Y6XkNVrVHz-AvNUFt0GGUw" },
+      { id: 1080, title: "（84）盆腔子宫内膜异位症的磁共振成像（MRI）：对 MR#Enzian 分类的评估及子宫腺肌病亚型的重要性", url: "https://mp.weixin.qq.com/s/U8ZI3JVeDhawITEy-Hs6WA" },
+      { id: 1081, title: "（13）子宫肌瘤超声检查评估：基准专业要求的图文报告", url: "https://mp.weixin.qq.com/s/L-Sf7gLI-tSmOTt9y8s26A" },
+      { id: 1082, title: "（16）经阴道超声作为深部子宫内膜异位症的一线检查方法：图解说明文", url: "https://mp.weixin.qq.com/s/F6AtsqIsoFRovLSATVgC9w" },
+      { id: 1083, title: "（17）深部子宫内膜异位症的经阴道超声检查：图解说明及（IDEA）小组共识意见宫旁组织的超声评估", url: "https://mp.weixin.qq.com/s/g9E1BSGoBVo6pvSeDWEHRQ" },
+      { id: 1084, title: "（20）经阴道超声在子宫内膜异位症术前分期和分类中的应用专家意见", url: "https://mp.weixin.qq.com/s/3lyGQMeRwLU7WzGPGI5swQ" },
+      { id: 1085, title: "（21）浅表子宫内膜异位症的超声诊断标准建议", url: "https://mp.weixin.qq.com/s/fz_e_tay5ZW1wFITxqj_3A" },
+      { id: 1086, title: "9月12日出生缺陷日，《产前遗传病诊断》第二版", url: "https://mp.weixin.qq.com/s/cwQ87ILURnqGX8KMX46uAw" },
+      { id: 1087, title: "会元遗传咨询联合门诊专家团队（20250912起航）", url: "https://mp.weixin.qq.com/s/44aBC1VTIXFuoiPLxrRd7Q" },
+      { id: 1088, title: "（22）超声放射学会关于子宫内膜异位症常规盆腔超声检查的共识（上）包含12个经典视频，看完你也会做超声", url: "https://mp.weixin.qq.com/s/2ZObpPXb31pSw9eXJ3eKoQ" },
+      { id: 1089, title: "（22）超声放射学会关于子宫内膜异位症常规盆腔超声检查的共识（下）包含12个经曲视频，看完你也会做超声", url: "https://mp.weixin.qq.com/s/Wp5E8lilgPXf4yls8rvfXg" },
+      { id: 1090, title: "（99）子宫内膜交界带的形态特征及功能：文献综述", url: "https://mp.weixin.qq.com/s/-DTCw7CC44S8ULoAHlbmEA" },
+      { id: 1091, title: "（三、306）子宫内膜结合带在人类生殖中的重要性", url: "https://mp.weixin.qq.com/s/5wrp47DdhsfcwCIgbXoYMg" },
+      { id: 1092, title: "（82）子宫腺肌病患者子宫蠕动情况：迈向功能评估的一步", url: "https://mp.weixin.qq.com/s/oqOJh0LpQHPI1_ldT-kOvQ" },
+      { id: 1093, title: "（三、178、2）妊娠滋养细胞疾病——文献综述及不典型病例报告", url: "https://mp.weixin.qq.com/s/PuJcj4rTMvNNh9tSOcXMbg" },
+      { id: 1094, title: "（34）子宫腺肌病：诊断与分类的最新进展，及基于MRI的影像组学作为子宫腺肌病有前景无创诊断技术", url: "https://mp.weixin.qq.com/s/8ltQsa4ODkXSo3rItkfpPw" },
+      { id: 1095, title: "（85）急性盆腔疼痛：磁共振成像的图解综述", url: "https://mp.weixin.qq.com/s/Yq0VVOy_RRqkUP_rLxdU1w" },
+      { id: 1096, title: "（64）2025 欧洲心脏病学会（ESC）心血管疾病和妊娠管理指南（上）", url: "https://mp.weixin.qq.com/s/2Mqju2ogyO58MHwdD0wEBA" },
+      { id: 1097, title: "（65）2025 欧洲心脏病学会（ESC）心血管疾病和妊娠管理指南（下）", url: "https://mp.weixin.qq.com/s/kjGRHGIIIFnXzd-8vb5F0g" },
+      { id: 1098, title: "（83）子宫腺肌病的内、外在表型：超声特征及其与临床结局的关系", url: "https://mp.weixin.qq.com/s/mWdGnHDxicm4_lfril2zhw" },
+      { id: 1099, title: "（6）卵泡代谢功能障碍、卵母细胞非整倍体与卵巢衰老：综述", url: "https://mp.weixin.qq.com/s/Yc4rBG6Q8Sua_3ASSOHjhg" },
+      { id: 1100, title: "（29）子宫腺肌病超声分类与评分系统建立及磁共振成像经典图解综述", url: "https://mp.weixin.qq.com/s/wekygfeBljs6jja7m76k5A" },
+      { id: 1101, title: "（35）子宫腺肌病患者术前磁共振成像对深部浸润型子宫内膜异位症的评估", url: "https://mp.weixin.qq.com/s/Gf2xe9CzUMv8X4QM8kAEow" },
+      { id: 1102, title: "（145）高龄女性的子宫内膜容受性：一个被低估的不孕因素", url: "https://mp.weixin.qq.com/s/NKbsbnpoCD53oo7yLFS_gQ" },
+      { id: 1103, title: "（71）抗磷脂综合征中的自然杀伤细胞功能障碍", url: "https://mp.weixin.qq.com/s/sIIFFoP19Ul2Ogezel93LQ" },
+      { id: 1104, title: "内异症和腺肌症相关出血、早孕出血，抗凝与抗血小板区别，止血、抗炎和抗生素及孕激素抵抗等问题解答", url: "https://mp.weixin.qq.com/s/bFN_djB4reR9eMJjzA8dIg" },
+      { id: 1105, title: "（81）子宫腺肌病：诊断（超声表现分类、典型非典型影像表现）、治疗及生育能力相关研究进展", url: "https://mp.weixin.qq.com/s/hqgC-i4s1-w5qRYc7VH5hA" },
+      { id: 1106, title: "（86）急性产科疾病的影像学表现：图解式综述", url: "https://mp.weixin.qq.com/s/Onr5TLFO6rJwRbsaAVU2EA" },
+      { id: 1107, title: "（87）妇科急腹症的成因：常见与不常见的影像学表现", url: "https://mp.weixin.qq.com/s/rHjIKJJGEUAuWdmKrI66HQ" },
+      { id: 1108, title: "（25）青少年严重痛经需要进行无创超声检查以早期发现子宫内膜异位症/子宫腺肌症", url: "https://mp.weixin.qq.com/s/7xFHjy5GSRXjzv6co4R6TA" },
+      { id: 1109, title: "（81）代谢性疾病编程：从线粒体到表观遗传学、糖皮质激素信号传导及其他方面", url: "https://mp.weixin.qq.com/s/zD9v9-5H8Uc8Ew0ktH2f3g" },
+      { id: 1110, title: "（三、4、5）子宫内膜异位症与产科并发症之间的关联：来自全国住院样本的见解", url: "https://mp.weixin.qq.com/s/5SijlU4dNH9pHh-M7_CI4g" },
+      { id: 1111, title: "（150）子宫内膜异位症患者在位子宫内膜蜕膜化受损的分子基础", url: "https://mp.weixin.qq.com/s/cMhJopIWjDnnRD_qmBEypg" },
+      { id: 1112, title: "（20、3）cGAS-STING 促进衰老相关炎症和神经退行性病变以及线粒体自噬抑制线粒体 DNA 依赖炎症激活", url: "https://mp.weixin.qq.com/s/QqEb-rfinGDpErTsV86xAg" },
+      { id: 1113, title: "（三、10、2）cGAS-STING通路与女性生殖系统疾病", url: "https://mp.weixin.qq.com/s/qkemyMAazluCouoYJfqbrQ" },
+      { id: 1114, title: "（20、2）cGAS-STING、炎性小体与细胞焦亡：激活与调控的交互作用机制概述", url: "https://mp.weixin.qq.com/s/9UDLGW9vP8F_JeV0pksa3g" }
+    ];
+
+    // 配置
+    const ARTICLES_PER_PAGE = 50;
+    const MAX_VISIBLE_PAGES = 5;
+    const TOTAL_PAGES = 23; // 假设总共有20页
+
+    // 状态管理
+    let currentPage = 1;
+    let readArticles = JSON.parse(localStorage.getItem('readArticles')) || {};
+
+    // DOM元素
+    const articleList = document.getElementById('article-list');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const pageNumbers = document.getElementById('page-numbers');
+    const readCountEl = document.getElementById('read-count');
+    const totalCountEl = document.getElementById('total-count');
+    const progressEl = document.getElementById('progress');
+
+    // 初始化
+    function init() {
+      updateStats();
+      renderArticles();
+      renderPagination();
+      
+      // 添加事件监听器
+      prevPageBtn.addEventListener('click', goToPrevPage);
+      nextPageBtn.addEventListener('click', goToNextPage);
+    }
+
+    // 更新统计信息
+    function updateStats() {
+      const totalArticles = articles.length;
+      const readCount = Object.keys(readArticles).length;
+      const progress = totalArticles > 0 ? Math.round((readCount / totalArticles) * 100) : 0;
+      
+      readCountEl.textContent = `已阅读: ${readCount}`;
+      totalCountEl.textContent = `总文章: ${totalArticles}`;
+      progressEl.textContent = `进度: ${progress}%`;
+    }
+
+    // 渲染文章列表
+    function renderArticles() {
+      articleList.innerHTML = '';
+      
+      const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+      const endIndex = Math.min(startIndex + ARTICLES_PER_PAGE, articles.length);
+      
+      for (let i = startIndex; i < endIndex; i++) {
+        const article = articles[i];
+        const isRead = readArticles[article.id];
+        
+        const li = document.createElement('li');
+        li.className = `article-item ${isRead ? 'read' : ''}`;
+        
+        li.innerHTML = `
+          <div class="article-number">${article.id}</div>
+          <a href="${article.url}" target="_blank" class="article-link" data-id="${article.id}">
+            <div class="read-indicator"></div>
+            <span>${article.title}</span>
+          </a>
+        `;
+        
+        articleList.appendChild(li);
+      }
+      
+      // 添加点击事件监听器
+      document.querySelectorAll('.article-link').forEach(link => {
+        link.addEventListener('click', function() {
+          const articleId = this.getAttribute('data-id');
+          markAsRead(articleId);
+        });
+      });
+    }
+
+    // 标记文章为已读
+    function markAsRead(articleId) {
+      readArticles[articleId] = true;
+      localStorage.setItem('readArticles', JSON.stringify(readArticles));
+      updateStats();
+      
+      // 更新UI
+      const articleItem = document.querySelector(`.article-link[data-id="${articleId}"]`).closest('.article-item');
+      articleItem.classList.add('read');
+    }
+
+    // 渲染分页控件
+    function renderPagination() {
+      pageNumbers.innerHTML = '';
+      
+      // 上一页按钮状态
+      prevPageBtn.disabled = currentPage === 1;
+      
+      // 下一页按钮状态
+      nextPageBtn.disabled = currentPage === TOTAL_PAGES;
+      
+      // 计算显示的页码范围
+      let startPage = Math.max(1, currentPage - Math.floor(MAX_VISIBLE_PAGES / 2));
+      let endPage = Math.min(TOTAL_PAGES, startPage + MAX_VISIBLE_PAGES - 1);
+      
+      // 调整起始页码，确保显示MAX_VISIBLE_PAGES个页码
+      if (endPage - startPage + 1 < MAX_VISIBLE_PAGES) {
+        startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
+      }
+      
+      // 添加第一页和省略号
+      if (startPage > 1) {
+        addPageButton(1);
+        if (startPage > 2) {
+          addEllipsis();
+        }
+      }
+      
+      // 添加页码按钮
+      for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+      }
+      
+      // 添加最后一页和省略号
+      if (endPage < TOTAL_PAGES) {
+        if (endPage < TOTAL_PAGES - 1) {
+          addEllipsis();
+        }
+        addPageButton(TOTAL_PAGES);
+      }
+    }
+
+    // 添加页码按钮
+    function addPageButton(page) {
+      const button = document.createElement('button');
+      button.textContent = page;
+      button.className = page === currentPage ? 'active' : '';
+      button.addEventListener('click', () => goToPage(page));
+      pageNumbers.appendChild(button);
+    }
+
+    // 添加省略号
+    function addEllipsis() {
+      const span = document.createElement('span');
+      span.className = 'ellipsis';
+      span.textContent = '...';
+      pageNumbers.appendChild(span);
+    }
+
+    // 跳转到指定页面
+    function goToPage(page) {
+      currentPage = page;
+      renderArticles();
+      renderPagination();
+    }
+
+    // 跳转到上一页
+    function goToPrevPage() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    }
+
+    // 跳转到下一页
+    function goToNextPage() {
+      if (currentPage < TOTAL_PAGES) {
+        goToPage(currentPage + 1);
+      }
+    }
+
+    // 初始化应用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
